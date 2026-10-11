@@ -6,8 +6,11 @@
 """
 import os
 
+# получаем абсолютный путь к корню проекта.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # ПУТИ К ДАННЫМ
-DATA_DIR = "a_data"
+DATA_DIR = os.path.join(BASE_DIR, "a_data")
 RAW_DATA_PATH = os.path.join(DATA_DIR, "aa_raw", "train.csv")
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "ab_processed", "preprocessed_train.csv")
 

@@ -56,6 +56,7 @@ Thumbs.db
 desktop.ini
 
 # Логирование
+logs/
 *.log
 
 .history/
