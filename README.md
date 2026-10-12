@@ -1,10 +1,20 @@
 # nlp_tfidf_logreg_catboost
 
-# Sports Text Classifier 
-
 ![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge)
 
+## Roadmap (План разработки)
+
+- [x] Создание структуры проекта и настройка окружения
+- [x] Загрузка и валидация сырых данных (`data_loader.py`)
+- [x] Исследовательский анализ данных (EDA)
+- [ ] Реализация модуля предобработки текста (`preprocessing.py`)
+- [ ] Создание признаков (TF-IDF)
+- [ ] Обучение и сравнение моделей (Logistic Regression vs CatBoost)
+- [ ] Написание скрипта для инференса (`run_inference.py`)
+- [ ] Финальная документация и рефакторинг
+
+# Sports Text Classifier 
 
 Классификатор спортивных новостей на 4 категории: **winter_sport**, **football**, **tennis**, **autosport**.
 
