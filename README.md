@@ -2,6 +2,10 @@
 
 # Sports Text Classifier 
 
+![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge)
+
+
 Классификатор спортивных новостей на 4 категории: **winter_sport**, **football**, **tennis**, **autosport**.
 
 ## EDA
