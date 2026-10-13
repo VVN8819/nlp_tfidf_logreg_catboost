@@ -42,6 +42,7 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+*.png
 
 # IDE
 .vscode/
