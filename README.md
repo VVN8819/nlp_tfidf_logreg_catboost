@@ -8,7 +8,7 @@
 - [x] Project structure creating
 - [x] Raw data uploading and validation (`bb_data_loader.py`)
 - [x] Exploratory Data Analysis (EDA)
-- [ ] Text pre-processing (`preprocessing.py`)
+- [x] Text pre-processing (`bc_preprocessing.py`)
 - [ ] Features creation (TF-IDF)
 - [ ] Model training and comparison (Logistic Regression vs CatBoost)
 - [ ] Inference (`run_inference.py`)
