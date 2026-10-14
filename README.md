@@ -16,44 +16,64 @@
 
 # Sports Text Classifier 
 
-Классификатор спортивных новостей на 4 категории: **winter_sport**, **football**, **tennis**, **autosport**.
+Sports news classifier with four categories: **winter_sport**, **football**, **tennis**, **autosport**.
 
 ## EDA
-### Анализ целевой переменной (Классы)
-1. Идеальный баланс - Все 13 категорий имеют примерно одинаковое количество постов (1962 - 2412). Это значит, что нам не придется бороться с дисбалансом классов при обучении моделей.
-2. Дубликаты удалены: 2966 дубликатов (почти 8% данных) - это хороший результат очистки.
+### Analysis of the target variable (Classes)
+1. Perfect balance – All 13 categories have roughly the same number of posts (1,962–2,412). This means we won't have to deal with class imbalance when training the models.
+2. Duplicates removed: 2,966 duplicates (almost 8% of the data) – a good cleaning result.
 
 ![Распределение категорий в обучающей выборке](plots/image.png)
 
-### Статистика длины текста
-Сильное правостороннее смещение:
-1. Большинство текстов короткие (0-100 слов)
-2. Есть длинный хвост с редкими длинными текстами (до 504 слов)
-3. Это типично для соцсетей: много коротких постов, мало длинных статей
-Ключевые цифры:
-1. min = 4 слова - это очень мало. Тексты из 4 слов почти бесполезны для классификации
-2. median = 35 слов - половина всех текстов короче 35 слов
-3. mean = 61 слово - средняя длина (выше медианы из-за длинных текстов)
-4. max = 504 слова - есть полноценные статьи
+### Text length statistics
+Strong right skew:
+1. Most texts are short (0–100 words)
+2. There is a long tail of infrequent long texts (up to 504 words)
+3. This is typical for social media: many short posts, few long articles
+Key figures:
+1. min = 4 words – very low; 4-word texts are almost useless for classification
+2. median = 35 words – half of all texts are shorter than 35 words
+3. mean = 61 words – average length (higher than the median due to long texts)
+4. max = 504 words – includes full-length articles
 
 ![Статистика длины текста](plots/image-1.png)
 
-### Количество текстов длиной <= 10 слов: 2484
-2484 текста (8.7% от всех) - это немного. И главное: они осмысленные.
-Примеры:
+### Number of texts with a length of ≤ 10 words: 2,484
+2,484 texts (8.7% of the total) is not a large number. And most importantly: they are meaningful.
+Examples:
 - "Пожалуй празднования гола лучше в этом сезоне уже не будет"
 - "Даниил Медведев передает привет из солнечного Монако"
 - "Фабрицио Романо сообщает что Тен Хаг подписал контракт с МЮ"
-Короткие тексты не нужно удалять. Они несут информацию и модель может их классифицировать.
+Short texts do not need to be deleted. They contain information, and the model can classify them.
 
-### Частотный анализ (Поиск мусора и паттернов)
-Анализ Топ-20 слов и Топ-15 слов категории показал:
-- Много стоп-слов - решим с помощью NLTK
-- 33 - артефакт удалим
-- есть одиночные цифры не несут смысла - удалим
+### Frequency analysis (searching for noise and patterns)
+Analysis of the top 20 words and the top 15 category words revealed:
+- Many stop words – we will handle this using NLTK
+- "33" is an artifact – we will remove it
+- There are standalone digits that carry no meaning – we will remove them
 
 ![Топ-20 слов](plots/image-2.png)
 ![Топ-15 слов категории](plots/image-3.png)
+
+### Частотный анализ и Распределение длины текстов ПОСЛЕ очистки и лемматизации
+Слова-паразиты (нужно добавить в стоп-слова):
+- Местоимения и частицы
+    'я', 'мы', 'все', 'это', 'тот', 'та', 'так', 'же', 'бы', 'ли',
+    'свой', 'наш', 'ваш', 'его', 'её', 'их', 'мой', 'твой',
+- Наречия и прилагательные (слишком общие)
+    'очень', 'хороший', 'новый', 'первый', 'последний', 'большой',
+- Глаголы-связки
+    'стать', 'быть', 'являться',
+- Общие существительные
+    'день', 'время', 'место', 'год', 'раз', 'часть', 'сторона'
+
+![Топ-20 слов ПОСЛЕ очистки и лемматизации](plots/image-4.png)
+![Статистика длины текста ПОСЛЕ очистки и лемматизации](plots/image-5.png)
+
+### Финальная очистка
+- Слова "свой", "наш", "хороший", "стать", "первый", "быть", "новый" исчезли из топа
+- Средняя длина текста уменьшилась с 38.68 до 36.89 слов
+- В топе теперь больше спортивных терминов: "команда", "игра", "матч", "сезон", "турнир", "чемпионат", "игрок", "гонка", "победа", "чемпион"
 
 ## Быстрый старт
 
@@ -84,7 +104,7 @@ python scripts/run_inference.py --text "Футбольный матч завер
 graph TD
     %% Узлы: Данные
     RawData[("a_data/aa_raw/train.csv")]
-    ProcessedData[("a_data/ab_processed/preprocessed.csv")]
+    ProcessedData[("a_data/ab_processed/preprocessed_train.csv")]
 
     %% Узлы: Исходный код (src)
     DataLoader["b_src/bb_data_loader.py"]

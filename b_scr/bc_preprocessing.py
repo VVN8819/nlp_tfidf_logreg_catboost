@@ -27,7 +27,14 @@ except OSError:
 stop_words = set(stopwords.words('russian'))
 
 # Расширяем стоп-слова на основе EDA (эти слова часто встречаются, но не несут смысла для классификации)
-additional_stop_words = {'я', 'мы', 'все', 'это', 'тот', 'та', 'так', 'же', 'бы', 'ли'}
+additional_stop_words = {
+    'я', 'мы', 'все', 'это', 'тот', 'та', 'так', 'же', 'бы', 'ли',
+    'свой', 'наш', 'ваш', 'его', 'её', 'их', 'мой', 'твой',
+    'очень', 'хороший', 'новый', 'первый', 'последний', 'большой',
+    'стать', 'быть', 'являться',
+    'день', 'время', 'место', 'год', 'раз', 'часть', 'сторона',
+    'весь', 'мочь', 'ещё', 'хотеть', 'сегодня', 'друг'
+}
 stop_words.update(additional_stop_words)
 
 # Токенайзер: оставляет только буквы и цифры
@@ -58,8 +65,8 @@ def preprocess_text(text: str) -> str:
     4. Удаление слов с "tokenoid" (артефакт токенизации)
     5. Удаление ссылок (http, https)
     6. Токенизация (только буквы и цифры)
-    7. Удаление стоп-слов (NLTK + дополнительные)
-    8. Лемматизация
+    7. Лемматизация
+    8. Удаление стоп-слов (NLTK + дополнительные)
     """
     if not isinstance(text, str):
         return ""
@@ -83,14 +90,14 @@ def preprocess_text(text: str) -> str:
     # 6. Токенизация
     tokens = nltk_tokenizer.tokenize(text)
     
-    # 7. Удаление стоп-слов
+    # 7. Лемматизация
+    tokens = [get_norm_form(token) for token in tokens]
+    
+    # 8. Удаление стоп-слов
     tokens = [token for token in tokens if token not in stop_words]
     
-    # 8. Удаление слишком коротких токенов (1-2 символа после очистки)
+    # 9. Удаление слишком коротких токенов (1-2 символа после очистки)
     tokens = [token for token in tokens if len(token) > 2]
-    
-    # 9. Лемматизация
-    tokens = [get_norm_form(token) for token in tokens]
     
     # 10. Сборка
     return ' '.join(tokens)
