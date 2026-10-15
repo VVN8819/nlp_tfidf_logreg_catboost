@@ -9,7 +9,7 @@
 - [x] Raw data uploading and validation (`bb_data_loader.py`)
 - [x] Exploratory Data Analysis (EDA)
 - [x] Text pre-processing (`bc_preprocessing.py`)
-- [ ] Features creation (TF-IDF)
+- [x] Features creation (TF-IDF)
 - [ ] Model training and comparison (Logistic Regression vs CatBoost)
 - [ ] Inference (`run_inference.py`)
 - [ ] Final documentation and refactoring
@@ -108,14 +108,14 @@ graph TD
 
     %% Узлы: Исходный код (src)
     DataLoader["b_src/bb_data_loader.py"]
-    Preprocessing["b_src/preprocessing.py"]
-    FeatureExtraction["b_src/feature_extraction.py"]
+    Preprocessing["b_src/bc_preprocessing.py"]
+    FeatureExtraction["b_src/bd_feature_extraction.py"]
     ModelsTrain["b_src/models.py / train.py"]
     Evaluate["b_src/evaluate.py"]
     Predict["b_src/predict.py"]
 
     %% Узлы: Артефакты и Скрипты
-    SavedModels[("models/vectorizer.pkl, model.cbm")]
+    SavedModels[("models/tfidf_vectorizer.joblib, model.cbm")]
     RunTrain["scripts/run_training.py"]
     RunInference["scripts/run_inference.py"]
 
