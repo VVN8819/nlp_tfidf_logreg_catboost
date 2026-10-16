@@ -47,7 +47,7 @@ def create_and_save_tfidf(train_text, val_text):
     logger.info(f"Размер словаря (Vocabulary size): {len(vectorizer.vocabulary_)}")
     logger.info(f"Форма X_train: {X_train.shape}, Форма X_val: {X_val.shape}")
     
-    # Сохраняем векторизатор на диск (он понадобится для инференса!)
+    # Сохраняем векторизатор на диск (он понадобится для инференса)
     vectorizer_path = os.path.join(ba_config.MODELS_PATH, "tfidf_vectorizer.joblib")
     
     # Создаем папку models, если её нет

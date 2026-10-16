@@ -115,7 +115,7 @@ graph TD
     Predict["b_src/predict.py"]
 
     %% Узлы: Артефакты и Скрипты
-    SavedModels[("models/tfidf_vectorizer.joblib, model.cbm")]
+    SavedModels[("d_models/tfidf_vectorizer.joblib, model.cbm")]
     RunTrain["scripts/run_training.py"]
     RunInference["scripts/run_inference.py"]
 

@@ -14,6 +14,9 @@ DATA_DIR = os.path.join(BASE_DIR, "a_data")
 RAW_DATA_PATH = os.path.join(DATA_DIR, "aa_raw", "train.csv")
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "ab_processed", "preprocessed_train.csv")
 
+# ПУТИ К МОДЕЛЯМ И АРТЕФАКТАМ
+MODELS_PATH = os.path.join(BASE_DIR, "d_models")
+
 # НАЗВАНИЯ КОЛОНОК
 ID_COL = "oid"
 TEXT_COL = "text"
