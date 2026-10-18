@@ -11,6 +11,7 @@
 - [x] Text pre-processing (`bc_preprocessing.py`)
 - [x] Features creation (TF-IDF)
 - [x] Model training and comparison (Logistic Regression vs CatBoost)
+- [x] Increasing the number of components (CatBoost + TruncatedSVD)
 - [ ] Inference (`run_inference.py`)
 - [ ] Final documentation and refactoring
 
@@ -163,6 +164,41 @@ When comparing `Logistic Regression` and `CatBoost`, accuracy dropped from 81.29
 3. Decision trees (such as CatBoost) do not handle sparse data well. At each step, a tree attempts to find a single feature that best splits the data. When 99% of the features are zeros, the tree ends up `guessing` and constructing overly complex, convoluted rules, which leads to overfitting on noise.
 
 In the experiments, `Logistic Regression` (81.3%) outperformed `CatBoost` (68.9%) when using raw TF-IDF features. This result is expected, given the high sparsity of the feature matrix (10,000 columns, ~99% zeros) - a condition that linear models handle better than tree-based ensembles. To improve CatBoost's performance, the use of dimensionality reduction (TruncatedSVD) is recommended.
+
+### CatBoost on TF-IDF features + TruncatedSVD
+`Hypothesis`: Increasing the number of components from 150 to 500 will provide the model with new, useful information and increase Accuracy up to 78-83%.
+```bash
+2026-10-19 02:08:09,897 - INFO -  - CatBoost (SVD) - Accuracy: 0.6941 (69.41%)
+2026-10-19 02:08:10,022 - INFO - Classification Report:
+              precision    recall  f1-score   support
+
+   athletics       0.86      0.80      0.83       415
+   autosport       0.81      0.74      0.77       482
+  basketball       0.72      0.67      0.70       392
+  boardgames       0.80      0.80      0.80       404
+      esport       0.52      0.55      0.54       434
+     extreme       0.39      0.64      0.49       441
+    football       0.68      0.58      0.63       446
+      hockey       0.71      0.72      0.72       464
+martial_arts       0.68      0.59      0.63       462
+   motosport       0.81      0.74      0.77       435
+      tennis       0.87      0.88      0.87       469
+  volleyball       0.76      0.58      0.66       443
+winter_sport       0.66      0.73      0.69       437
+
+    accuracy                           0.69      5724
+   macro avg       0.71      0.69      0.70      5724
+weighted avg       0.71      0.69      0.70      5724
+```
+- Accuracy: 69.04% to 69.41% (a change within the margin of statistical error, meaning no actual improvement).
+- Training time: 1.5 minutes to 4.5 minutes (a 3-fold increase).
+`Conclusion`: The hypothesis was not supported. Increasing the number of components from 150 to 500 did not provide the model with any new, useful information; instead, it merely added computational noise. The first 150 SVD components already captured ~85–90% of the meaningful variance (semantic topics) in this dataset. The remaining 350 components consist primarily of noise and infrequent, unstable word combinations, which only hinder the decision trees from establishing clear rules.
+
+### Comparison of models using TF-IDF features:
+In our experiments, `Logistic Regression` (81.3%) significantly outperformed `CatBoost` (~69%).
+We tested the hypothesis that decision trees are hindered by high data sparsity (10,000 features). To investigate this, we applied dimensionality reduction to obtain dense features using TruncatedSVD (with 150 and 500 components).
+
+`Result`: Compressing the data accelerated CatBoost training by a factor of 6, but did not yield any improvement in performance. This confirms that for text classification tasks based on word frequencies (TF-IDF), linear models serve as an optimal baseline, as they are better suited for handling sparse, discrete signals.
 
 ## Architecture
 ```mermaid

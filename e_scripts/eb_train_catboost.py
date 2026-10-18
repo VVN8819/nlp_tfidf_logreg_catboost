@@ -12,7 +12,8 @@ import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from b_scr import ba_config
-from b_scr.bd_feature_extraction import create_and_save_tfidf
+#from b_scr.bd_feature_extraction import create_and_save_tfidf
+from b_scr.bd_feature_extraction import create_and_save_tfidf_svd
 from b_scr.be_models import train_catboost
 
 # Настраиваем логирование
@@ -36,14 +37,17 @@ def main():
     )
     
     # 3. Создаем TF-IDF признаки
-    logger.info(" - Создание TF-IDF признаков")
-    vectorizer, X_train, X_val = create_and_save_tfidf(
+    # 3. Создаем признаки через новый пайплайн
+    #logger.info(" - Создание TF-IDF признаков")
+    logger.info(" - Создание TF-IDF + SVD признаков")
+    #vectorizer, X_train, X_val = create_and_save_tfidf(
+    pipeline, X_train, X_val = create_and_save_tfidf_svd(
         train_df['clean_text'],
         val_df['clean_text']
     )
     
     # 4. Обучаем модель
-    
+    logger.info(" - Обучение CatBoost")
     model, accuracy = train_catboost(
         X_train, train_df[ba_config.TARGET_COL],
         X_val, val_df[ba_config.TARGET_COL]
