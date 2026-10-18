@@ -5,10 +5,10 @@ a_data/ab_processed/
 *.xlsx
 
 # Модели
-models/*.pkl
-models/*.cbm
-models/*.pth
-models/*.joblib
+d_models/*.pkl
+d_models/*.cbm
+d_models/*.pth
+d_models/*.joblib
 
 # Python
 __pycache__/
@@ -60,3 +60,4 @@ logs/
 *.log
 
 .history/
+catboost_info/

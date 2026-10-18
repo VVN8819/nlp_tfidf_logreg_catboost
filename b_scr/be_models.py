@@ -65,13 +65,16 @@ def train_catboost(X_train, y_train, X_val, y_val):
     logger.info(" Обучение CatBoost")
     
     model = CatBoostClassifier(
-        iterations=300,
-        learning_rate=0.1,
-        depth=6,
+        iterations=500, # Увеличиваем количество деревьев
+        learning_rate=0.05, # Уменьшаем шаг обучения для стабильности
+        depth=4, # мельче деревья
+        l2_leaf_reg=3, # Регуляризация против переобучения
+        auto_class_weights='Balanced',   # балансировка 13 классов
         loss_function='MultiClass',
         random_seed=ba_config.RANDOM_SEED,
-        verbose=False
+        verbose=50
     )
+    logger.info("Начало обучения:")
     model.fit(X_train, y_train)
     
     model_path = os.path.join(ba_config.MODELS_PATH, "catboost_model.cbm")
