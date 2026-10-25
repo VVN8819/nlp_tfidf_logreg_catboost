@@ -1,6 +1,6 @@
 # nlp_tfidf_logreg_catboost
 
-![Status](https://img.shields.io/badge/Status-Work%20Finished-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Work%20in%20progress-yellow?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge)
 
 ## Roadmap
@@ -12,12 +12,19 @@
 - [x] Features creation (TF-IDF)
 - [x] Model training and comparison (Logistic Regression vs CatBoost)
 - [x] Increasing the number of components (CatBoost + TruncatedSVD)
-- [x] Inference (`ec_run_inference.py`)
-- [x] Final documentation
+- [x] Inference (`ec_run_inference.py` Logistic Regression and CatBoost + TruncatedSVD)
+- [x] Pretrained Embeddings extraction (`bg_embedding_extractor.py`)
+- [ ] Pretrained Embeddings Inference (`ee_train_embeddings.py` Logistic Regression and CatBoost)
+- [ ] Final documentation
 
 # Sports Text Classifier 
 
-Sports news classifier with four categories: **winter_sport**, **football**, **tennis**, **autosport**.
+Sports news classifier with 13 categories: **winter_sport**, **football**, **tennis**, **autosport** and so on.
+**Dataset URL:** https://www.kaggle.com/datasets/mikhailma/russian-social-media-text-classification
+
+Implemented models:
+- TF-IDF (Logistic Regression, CatBoost, CatBoost + TruncatedSVD)
+- Pretrained Embeddings (Logistic Regression, CatBoost)
 
 ## Fast start
 
