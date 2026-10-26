@@ -14,7 +14,7 @@
 - [x] Increasing the number of components (CatBoost + TruncatedSVD)
 - [x] Inference (`ec_run_inference.py` Logistic Regression and CatBoost + TruncatedSVD)
 - [x] Pretrained Embeddings extraction (`bg_embedding_extractor.py`)
-- [ ] Pretrained Embeddings Inference (`ee_train_embeddings.py` Logistic Regression and CatBoost)
+- [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -121,7 +121,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── aa_raw/                      # Raw, original data
 │   │   └── train.csv                   # Original dataset from Kaggle (38,740 rows)
 │   └── ab_processed/                # Processed data
-│       └── preprocessed_train.csv      # Cleaned text after preprocessing
+│       ├── preprocessed_train.csv      # Cleaned text after preprocessing
+│       └── embedded_train.csv          # text + 384 columns of embeddings
 │
 ├── b_scr/                           # Source code
 │   ├── ba_config.py                    # Configuration: paths, constants, parameters
@@ -129,7 +130,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── bc_preprocessing.py             # Text cleaning and lemmatization (spaCy + NLTK)
 │   ├── bd_feature_extraction.py        # Feature extraction (TF-IDF + TruncatedSVD)
 │   ├── be_models.py                    # Model training (Logistic Regression, CatBoost)
-│   └── bf_inference.py                 # Inference: making predictions on new data
+│   ├── bf_inference.py                 # Inference: making predictions on new data
+│   └── bg_embedding_extractor.py       # extracting embeddings in batches
 │
 ├── c_notebooks/                     #  Jupyter-notebooks for research
 │   ├── logs/                        # Script execution logs
@@ -147,7 +149,9 @@ nlp_tfidf_logreg_catboost/
 ├──  e_scripts/                       # Entry points
 │   ├── ea_train_logistic_regression.py # Training Logistic Regression
 │   ├── eb_train_catboost.py            # Training CatBoost (with optional SVD)
-│   └── ec_run_inference.py             # Testing inference using examples
+│   ├── ec_run_inference.py             # Testing inference using examples
+│   ├── ed_train_embeddings.py          # training LR and CatBoost on embeddings
+│   └── ee_run_inference_embeddings.py  # inference on embeddings + OOD check
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── image-1.png                     # Text lengths (before cleaning)
@@ -220,7 +224,7 @@ Filler words (should be added to the stop-word list):
 - The average text length decreased from 38.68 to 36.89 words
 - There are now more sports terms among the top entries: "команда", "игра", "матч", "сезон", "турнир", "чемпионат", "игрок", "гонка", "победа", "чемпион"
 
-## Model training and comparison (Logistic Regression vs CatBoost vs CatBoost + TruncatedSVD)
+## Part 1. TF-IDF. Model training and comparison (Logistic Regression vs CatBoost vs CatBoost + TruncatedSVD)
 
 ### Logistic Regression on TF-IDF features
 ```bash
@@ -333,9 +337,99 @@ Following the training of both models, a blind test was conducted using 7 texts 
 
 **Decision:** `Logistic Regression` is selected for the TF-IDF-based production pipeline, as it serves as a more reliable and interpretable baseline.
 
+## Part 2. Pretrained Embeddings. Model training and comparison (Logistic Regression vs CatBoost)
+
+### Embeddings extraction
+```bash
+2026-10-25 22:40:30,526 - INFO -  Embeddings extracted: (28619, 384)
+2026-10-25 22:40:41,442 - INFO -  Embeddings are saved in: a_data\ab_processed\embedded_train.csv
+2026-10-25 22:40:41,442 - INFO - File size: 127.95 МБ
+2026-10-25 22:40:41,442 - INFO - 
+ Statistics:
+2026-10-25 22:40:41,442 - INFO -   Number of texts: 28619
+2026-10-25 22:40:41,442 - INFO -   Embedding dimension: 384
+2026-10-25 22:40:41,442 - INFO -   Columns: oid, category, emb_0...emb_383
+```
+**Analysis of the result**
+1. File size:
+- 127.95 MB for 28,619 rows and 384 features - this is highly compact and efficient.
+2. Structure of `embedded_train.csv`:
+- It contains an `oid`, a `category`, and 384 columns (`emb_0` ... `emb_383`).
+Each of these 384 columns is not merely a random number, but a coordinate representing meaning within a multidimensional space. Texts with similar meanings now have coordinates that are close to one another across all 384 of these axes.
+
+### Pretrained Embeddings + Logistic Regression
+```bash
+2026-10-27 02:04:23,317 - INFO -  - Logistic Regression - Accuracy: 0.7572 (75.72%)
+2026-10-27 02:04:23,456 - INFO - Classification Report:
+              precision    recall  f1-score   support
+
+   athletics       0.79      0.81      0.80       415
+   autosport       0.86      0.74      0.79       482
+  basketball       0.75      0.71      0.73       392
+  boardgames       0.86      0.88      0.87       404
+      esport       0.65      0.76      0.70       434
+     extreme       0.49      0.65      0.56       441
+    football       0.74      0.74      0.74       446
+      hockey       0.82      0.75      0.79       464
+martial_arts       0.76      0.67      0.71       462
+   motosport       0.84      0.79      0.81       435
+      tennis       0.92      0.87      0.90       469
+  volleyball       0.77      0.68      0.72       443
+winter_sport       0.73      0.80      0.77       437
+
+    accuracy                           0.76      5724
+   macro avg       0.77      0.76      0.76      5724
+weighted avg       0.77      0.76      0.76      5724
+```
+
+### Pretrained Embeddings + CatBoost
+```bash
+2026-10-27 02:07:51,155 - INFO -  - CatBoost - Accuracy: 0.7201 (72.01%)
+2026-10-27 02:07:51,290 - INFO - Classification Report:
+              precision    recall  f1-score   support
+
+   athletics       0.82      0.79      0.80       415
+   autosport       0.84      0.72      0.78       482
+  basketball       0.71      0.65      0.68       392
+  boardgames       0.80      0.85      0.83       404
+      esport       0.63      0.73      0.68       434
+     extreme       0.46      0.59      0.52       441
+    football       0.64      0.67      0.65       446
+      hockey       0.76      0.71      0.73       464
+martial_arts       0.68      0.61      0.64       462
+   motosport       0.81      0.77      0.79       435
+      tennis       0.89      0.86      0.87       469
+  volleyball       0.75      0.65      0.69       443
+winter_sport       0.68      0.78      0.73       437
+
+    accuracy                           0.72      5724
+   macro avg       0.73      0.72      0.72      5724
+weighted avg       0.73      0.72      0.72      5724
+```
+## Experimental results and selection of the model
+
+During the development process, a comparison was made between three approaches to text vectorization and two classification algorithms:
+```bash
+| Model               | Vectorizer            | Size   | Accuracy (Val) | Training time |
+| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 сек        |
+| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 мин      |
+| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 сек        |
+| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 мин      |
+```
+
+### Key takeaways:
+1. **The Triumph of Simplicity (Occam’s Razor):** The combination of TF-IDF and Logistic Regression yielded the best results. For classification tasks involving short texts with distinct keywords (such as team names or types of sports), the frequency-based approach (TF-IDF) preserves a more discrete and useful signal than generalized semantic embeddings.
+2. **Limitations of pre-trained embeddings:** While the `multilingual-e5-small` model is excellent for general-purpose tasks, it lost some of the domain-specific nuances of the sports slang used on Russian-language social media, which resulted in a ~5.5% drop in accuracy compared to TF-IDF.
+3. **CatBoost behavior:** When using sparse data (TF-IDF), CatBoost showed a tendency to overfit. With dense data (embeddings), it failed to outperform a linear model, which suggests that the classes are well linearly separable within this embedding space.
+
+**Final solution for production:** 
+The `Preprocessing - TF-IDF - Logistic Regression` pipeline was selected as the final choice due to its optimal combination of accuracy (81.3%), lightning-fast inference speed (<10 ms), and high interpretability.
+
+
 ## Tech
 - 'Python 3.10+'
 - 'scikit-learn', 'CatBoost'
 - 'NLTK', 'spaCy'
 - 'pandas', 'numpy'
+- 'sentence_transformers'
 

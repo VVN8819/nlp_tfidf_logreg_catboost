@@ -62,7 +62,30 @@ def train_catboost(X_train, y_train, X_val, y_val):
     """
     Обучает CatBoost на плотных признаках (после SVD).
     """
-    #logger.info(" Обучение CatBoost")
+    logger.info(" Обучение CatBoost")
+    
+    model = CatBoostClassifier(
+        iterations=400, # Достаточно для 150 признаков
+        learning_rate=0.05, # Уменьшаем шаг обучения для стабильности
+        depth=6,
+        l2_leaf_reg=3, # Регуляризация против переобучения
+        auto_class_weights='Balanced', # балансировка
+        loss_function='MultiClass',
+        random_seed=ba_config.RANDOM_SEED,
+        verbose=50
+    )
+    logger.info("Начало обучения:")
+    model.fit(X_train, y_train)
+    
+    model_path = os.path.join(ba_config.MODELS_PATH, "catboost_model.cbm")
+    acc = evaluate_and_save_model(model, "CatBoost", X_val, y_val, model_path)
+    
+    return model, acc
+
+def train_catboost_svd(X_train, y_train, X_val, y_val):
+    """
+    Обучает CatBoost на плотных признаках (после SVD).
+    """
     logger.info(" Обучение CatBoost (на плотных признаках SVD)")
     
     model = CatBoostClassifier(
@@ -78,13 +101,10 @@ def train_catboost(X_train, y_train, X_val, y_val):
     logger.info("Начало обучения:")
     model.fit(X_train, y_train)
     
-    #model_path = os.path.join(ba_config.MODELS_PATH, "catboost_model.cbm")
     model_path = os.path.join(ba_config.MODELS_PATH, "catboost_model_svd.cbm")
-    #acc = evaluate_and_save_model(model, "CatBoost", X_val, y_val, model_path)
     acc = evaluate_and_save_model(model, "CatBoost (SVD)", X_val, y_val, model_path)
     
     return model, acc
-    
     
     
     

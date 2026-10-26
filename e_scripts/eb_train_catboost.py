@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from b_scr import ba_config
 #from b_scr.bd_feature_extraction import create_and_save_tfidf
 from b_scr.bd_feature_extraction import create_and_save_tfidf_svd
-from b_scr.be_models import train_catboost
+from b_scr.be_models import train_catboost_svd
 
 # Настраиваем логирование
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -48,7 +48,7 @@ def main():
     
     # 4. Обучаем модель
     logger.info(" - Обучение CatBoost")
-    model, accuracy = train_catboost(
+    model, accuracy = train_catboost_svd(
         X_train, train_df[ba_config.TARGET_COL],
         X_val, val_df[ba_config.TARGET_COL]
     )
