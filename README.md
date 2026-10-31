@@ -50,11 +50,26 @@ python e_scripts/ea_train_logistic_regression.py
 # CatBoost with SVD
 python e_scripts/eb_train_catboost.py
 
-# Inference testing
-python e_scripts/ec_run_inference.py --text "Футбольный матч завершился победой сборной России"
+# Training models using dense embeddings (multilingual-e5-small)
+# Extracting embeddings from cleaned texts (takes ~5–10 min on CPU)
+# The result will be saved to a_data/ab_processed/embedded_train.csv
+python e_scripts/ed_extract_embeddings.py
+
+# Training LR and CatBoost models using the 384 features obtained
+python e_scripts/ee_train_embeddings.py
+
+# Testing inference (prediction on new data)
+# Testing the TF-IDF pipeline
+python e_scripts/ec_run_inference.py
+
+# Testing the pipeline using embeddings (including checks for OOD data)
+python e_scripts/ef_run_inference_embeddings.py
 ```
 
-## Architecture
+## Project Architecture
+The project implements two independent text classification pipelines, which are compared based on accuracy, training speed, and inference quality.
+
+## Architecture TF-IDF + TruncatedSVD
 ```mermaid
 graph TD
     %% Стили
@@ -113,6 +128,53 @@ graph TD
     EDA -.->|"Cleaning rules"| Preprocessing
 ```
 
+## Architecture Pretrained Embeddings (E5)
+```mermaid
+graph TD
+    %% Стили
+    classDef data fill:#f9f2f4,stroke:#c7254e,stroke-width:2px,rx:5,ry:5
+    classDef module fill:#e8f4f8,stroke:#2980b9,stroke-width:2px,rx:5,ry:5
+    classDef script fill:#fff2cc,stroke:#d6b656,stroke-width:2px,rx:5,ry:5
+    classDef model fill:#e2f0d9,stroke:#548235,stroke-width:2px,rx:5,ry:5
+    classDef notebook fill:#f0e6ff,stroke:#8e44ad,stroke-width:2px,rx:5,ry:5
+
+    %% Узлы: Данные
+    ProcessedData[(" a_data/ab_processed/<br/>preprocessed_train.csv")]:::data
+    EmbeddedData[(" a_data/ab_processed/<br/>embedded_train.csv<br/>(384 features)")]:::data
+
+    %% Узлы: Модули (b_scr)
+    Preprocessing[" b_scr/bc_preprocessing.py<br/>Cleaning + lemmatization<br/>(spaCy + NLTK)"]:::module
+    EmbeddingExtractor[" b_scr/bg_embedding_extractor.py<br/>SentenceTransformer<br/>(multilingual-e5-small)"]:::module
+    Models[" b_scr/be_models.py<br/>Logistic Regression<br/>CatBoost"]:::module
+    InferenceEmb[" b_scr/bh_inference_embeddings.py<br/>Prediction with E5<br/>(GPU/CPU auto-detect)"]:::module
+
+    %% Узлы: Скрипты (e_scripts)
+    ExtractEmb[" e_scripts/ed_extract_embeddings.py"]:::script
+    TrainEmb[" e_scripts/ee_train_embeddings.py"]:::script
+    RunInferenceEmb[" e_scripts/ef_run_inference_embeddings.py"]:::script
+
+    %% Узлы: Артефакты (d_models)
+    SavedModelsEmb[(" d_models/<br/>logistic_regression.joblib<br/>catboost_model.cbm")]:::model
+
+    %% ===== ПОТОК ДАННЫХ: ИЗВЛЕЧЕНИЕ ЭМБЕДДИНГОВ =====
+    ProcessedData -->|"1. Reading cleaned texts"| ExtractEmb
+    ExtractEmb -->|"2. Extracting embeddings<br/>(batch processing)"| EmbeddingExtractor
+    EmbeddingExtractor -->|"3. Saving embeddings"| EmbeddedData
+
+    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ =====
+    EmbeddedData -->|"4. Reading embedded_train.csv"| TrainEmb
+    TrainEmb -->|"5. Splitting train/val<br/>(384 features)"| Models
+    Models -->|"6. Training LR & CatBoost<br/>on dense embeddings"| SavedModelsEmb
+
+    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС =====
+    RunInferenceEmb -.->|"Receives new text"| InferenceEmb
+    InferenceEmb -.->|"7. preprocess_text()"| Preprocessing
+    InferenceEmb -.->|"8. E5 encoding<br/>(passage: prefix)"| EmbeddingExtractor
+    EmbeddingExtractor -.->|"9. 384-dim vector"| InferenceEmb
+    InferenceEmb -.->|"10. Model loading"| SavedModelsEmb
+    SavedModelsEmb -.->|"11. predict_proba()"| InferenceEmb
+    InferenceEmb -.->|"12. Category + Confidence"| RunInferenceEmb
+```
 
 ## Project structure
 ```bash
@@ -132,7 +194,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── bd_feature_extraction.py        # Feature extraction (TF-IDF + TruncatedSVD)
 │   ├── be_models.py                    # Model training (Logistic Regression, CatBoost)
 │   ├── bf_inference.py                 # Inference: making predictions on new data
-│   └── bg_embedding_extractor.py       # extracting embeddings in batches
+│   ├── bg_embedding_extractor.py       # Extracting embeddings in batches
+│   └── bh_inference_embeddings.py      # Embeddings Inference: making predictions on new data
 │
 ├── c_notebooks/                     #  Jupyter-notebooks for research
 │   ├── logs/                        # Script execution logs
