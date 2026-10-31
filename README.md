@@ -15,6 +15,7 @@
 - [x] Inference (`ec_run_inference.py` Logistic Regression and CatBoost + TruncatedSVD)
 - [x] Pretrained Embeddings extraction (`bg_embedding_extractor.py`)
 - [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
+- [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -422,8 +423,22 @@ During the development process, a comparison was made between three approaches t
 2. **Limitations of pre-trained embeddings:** While the `multilingual-e5-small` model is excellent for general-purpose tasks, it lost some of the domain-specific nuances of the sports slang used on Russian-language social media, which resulted in a ~5.5% drop in accuracy compared to TF-IDF.
 3. **CatBoost behavior:** When using sparse data (TF-IDF), CatBoost showed a tendency to overfit. With dense data (embeddings), it failed to outperform a linear model, which suggests that the classes are well linearly separable within this embedding space.
 
-**Final solution for production:** 
-The `Preprocessing - TF-IDF - Logistic Regression` pipeline was selected as the final choice due to its optimal combination of accuracy (81.3%), lightning-fast inference speed (<10 ms), and high interpretability.
+### Inference analysis and out-of-distribution (OOD) detection
+Beyond accuracy metrics, it is critically important to consider how a model behaves when faced with new, noisy, or irrelevant data. Confidence comparative inference test was conducted:
+```bash
+| Test scenario            | TF-IDF + LR      | Embeddings + LR      | Embeddings + CatBoost|
+| Obvious Sport (Football) | football (47.2%) | football (59.0%)     | football (43.9%)     |
+| OOD (Text about a cafe)  | extreme (16.2%)  | martial_arts (14.7%) | martial_arts (13.3%) |
+| Garbage ("33 33 33")     | Rejected (0.0%)  | Rejected (0.0%)      | Rejected (0.0%)      |
+```
+
+### Production Takeaways:
+1. **Safety:** Models based on embeddings exhibit lower and more honest confidence scores (< 15%) when encountering out-of-distribution (OOD) or irrelevant text. This makes it straightforward to implement a threshold filter (e.g., `if confidence < 0.20: reject`) to protect the system from junk input.
+2. **Error Correction:** Using `CatBoost with embeddings` successfully resolved a classification error related to "football" that occurred when using sparse TF-IDF representations.
+3. **Preprocessing Efficiency:** Filtering out junk data during the `preprocess_text` stage works flawlessly, preventing unnecessary computations and false positives.
+
+**Final Conclusion for Embeddings:** 
+Although the `TF-IDF + Logistic Regression `approach achieved higher accuracy (81.3% vs. 75.7%)—largely due to its superior ability to capture specific sports slang—the, pipeline based on **Embeddings + Logistic Regression** is a more reliable and safer choice for a production environment, thanks to its better confidence calibration and greater robustness to out-of-distribution (OOD) data.
 
 
 ## Tech
