@@ -7,7 +7,7 @@
 
 - [x] Project structure creating
 - [x] Raw data uploading and validation (`bb_data_loader.py`)
-- [x] Exploratory Data Analysis (EDA)
+- [x] Exploratory Data Analysis (EDA) for TF-IDF and Embeddings
 - [x] Text pre-processing (`bc_preprocessing.py`)
 - [x] Features creation (TF-IDF)
 - [x] Model training and comparison (Logistic Regression vs CatBoost)
@@ -16,6 +16,7 @@
 - [x] Pretrained Embeddings extraction (`bg_embedding_extractor.py`)
 - [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
 - [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
+- [ ] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -201,7 +202,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── logs/                        # Script execution logs
 │   │   └── data_loader_20261013.log
 │   ├── ca_check_data.ipynb             # Data loader verification
-│   └── cb_eda.ipynb                    # Exploratory Data Analysis (EDA)
+│   ├── cb_eda.ipynb                    # Exploratory Data Analysis (EDA)
+│   └── cc_deep_learning_exploration.ipynb # Exploratory Data Analysis (EDA) for Deep Learning
 │
 ├── d_models/                        # Trained models and artifacts
 │   ├── logistic_regression.joblib      # Best-performing model from the TF-IDF (Accuracy: 81.29%)
@@ -218,6 +220,8 @@ nlp_tfidf_logreg_catboost/
 │   └── ee_run_inference_embeddings.py  # inference on embeddings + OOD check
 │
 ├── plots/                           #  Visualizations from EDA
+│   ├── dl_text_lengths.png             # Text lengths for Deep Learning
+│   ├── dl_vocabulary.png               # Vocabulary Analysis for Deep Learning
 │   ├── image-1.png                     # Text lengths (before cleaning)
 │   ├── image-2.png                     # Top 20 words (before cleaning)
 │   ├── image-3.png                     # Top 15 words in the 'football' category
@@ -231,7 +235,7 @@ nlp_tfidf_logreg_catboost/
 └── requirements.txt
 ```
 
-## EDA
+## Part 1. EDA for TF-IDF and Embeddings
 ### Analysis of the target variable (Classes)
 1. Perfect balance – All 13 categories have roughly the same number of posts (1,962–2,412). This means we won't have to deal with class imbalance when training the models.
 2. Duplicates removed: 2,966 duplicates (almost 8% of the data) – a good cleaning result.
@@ -288,7 +292,7 @@ Filler words (should be added to the stop-word list):
 - The average text length decreased from 38.68 to 36.89 words
 - There are now more sports terms among the top entries: "команда", "игра", "матч", "сезон", "турнир", "чемпионат", "игрок", "гонка", "победа", "чемпион"
 
-## Part 1. TF-IDF. Model training and comparison (Logistic Regression vs CatBoost vs CatBoost + TruncatedSVD)
+## 1.1. TF-IDF. Model training and comparison (Logistic Regression vs CatBoost vs CatBoost + TruncatedSVD)
 
 ### Logistic Regression on TF-IDF features
 ```bash
@@ -401,7 +405,7 @@ Following the training of both models, a blind test was conducted using 7 texts 
 
 **Decision:** `Logistic Regression` is selected for the TF-IDF-based production pipeline, as it serves as a more reliable and interpretable baseline.
 
-## Part 2. Pretrained Embeddings. Model training and comparison (Logistic Regression vs CatBoost)
+## 1.2. Pretrained Embeddings. Model training and comparison (Logistic Regression vs CatBoost)
 
 ### Embeddings extraction
 ```bash
@@ -503,6 +507,8 @@ Beyond accuracy metrics, it is critically important to consider how a model beha
 **Final Conclusion for Embeddings:** 
 Although the `TF-IDF + Logistic Regression `approach achieved higher accuracy (81.3% vs. 75.7%)—largely due to its superior ability to capture specific sports slang—the, pipeline based on **Embeddings + Logistic Regression** is a more reliable and safer choice for a production environment, thanks to its better confidence calibration and greater robustness to out-of-distribution (OOD) data.
 
+## Part 2. EDA for Deep Learning (FCN, RNN, CNN)
+
 
 ## Tech
 - 'Python 3.10+'
@@ -510,4 +516,5 @@ Although the `TF-IDF + Logistic Regression `approach achieved higher accuracy (8
 - 'NLTK', 'spaCy'
 - 'pandas', 'numpy'
 - 'sentence_transformers'
+- 'torch', 'torchtext'
 
