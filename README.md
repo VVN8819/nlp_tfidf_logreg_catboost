@@ -16,7 +16,7 @@
 - [x] Pretrained Embeddings extraction (`bg_embedding_extractor.py`)
 - [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
 - [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
-- [ ] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
+- [x] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -508,7 +508,45 @@ Beyond accuracy metrics, it is critically important to consider how a model beha
 Although the `TF-IDF + Logistic Regression `approach achieved higher accuracy (81.3% vs. 75.7%)—largely due to its superior ability to capture specific sports slang—the, pipeline based on **Embeddings + Logistic Regression** is a more reliable and safer choice for a production environment, thanks to its better confidence calibration and greater robustness to out-of-distribution (OOD) data.
 
 ## Part 2. EDA for Deep Learning (FCN, RNN, CNN)
+### Analysis of text lengths
+Text length statistics:
+```bash
+count    28619.000000
+mean        36.012404
+std         41.353061
+min          2.000000
+25%         10.000000
+50%         21.000000
+75%         45.000000
+max        319.000000
+```
+![Статистика длины текста](plots/dl_text_lengths.png)
 
+### Vocabulary analysis
+**Overall dictionary statistics:**
+- Total words (including repetitions): 1,030,639
+- Unique words: 80,303
+
+**Rare words (occurring once):**
+- Count: 40,663
+- Share of the vocabulary: 50.6%
+![Статистика словаря](plots/dl_vocabulary.png)
+
+### Recommendations for Deep Learning Models
+
+**Recommended hyperparameters:**
+1. max_length (MAX_SEQ_LENGTH): 121
+- Covers 95% of texts
+- Information loss: ~5% of texts will be truncated
+- Padding: ~70% of tokens will be <PAD>
+
+2. vocab_size (MAX_VOCAB_SIZE): 10,000
+- Limit the vocabulary to the top 10,000 words
+- Rare words will be replaced with <UNK>
+
+3. embedding_dim: 100–300
+- 100: faster, requires less memory
+- 300: higher quality, but slower
 
 ## Tech
 - 'Python 3.10+'
