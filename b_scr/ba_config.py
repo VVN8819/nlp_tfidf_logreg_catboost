@@ -35,7 +35,7 @@ RANDOM_SEED = 42
 TEST_SIZE = 0.2
 
 # Deep learning ПАРАМЕТРЫ
-MAX_SEQ_LENGTH = 128  # Из EDA (95th percentile)
+MAX_SEQ_LENGTH = 128  # Из EDA (95th percentile), ограничение макс длины текста в токенах
 MAX_VOCAB_SIZE = 10000  # Ограничение словаря
 EMBEDDING_DIM = 100  # Размерность word embeddings
 

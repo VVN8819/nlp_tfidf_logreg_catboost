@@ -17,6 +17,7 @@
 - [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
 - [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
 - [x] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
+- [ ] DataLoader for Deep Learning models (`bi_data_loader_dl.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
