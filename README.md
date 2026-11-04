@@ -17,7 +17,9 @@
 - [x] Pretrained Embeddings training (`ee_train_embeddings.py` Logistic Regression and CatBoost)
 - [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
 - [x] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
-- [ ] DataLoader for Deep Learning models (`bi_data_loader_dl.py`)
+- [x] DataLoader for Deep Learning models (`bi_data_loader_dl.py`)
+- [ ] Fully connected network (FCN) class with Dropout (`bj_models_dl.py`)
+- [ ] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -548,6 +550,14 @@ max        319.000000
 3. embedding_dim: 100–300
 - 100: faster, requires less memory
 - 300: higher quality, but slower
+
+### The test of DataLoader for Deep Learning models
+Checking the first batch:
+- Texts shape: `torch.Size([64, 128])` - The batch contains 64 texts, and each has a length of exactly 128.
+- Labels shape: `torch.Size([64])`
+- Example of text (first 20 indices): tensor([138, 429, 955, 429, 2026, 7371, 3182, 405, 124, 7763, 827, 965, 156, 746, 2389, 1866, **1**, 81, 4384, 340]) - The **1** in the tensor is our `<UNK>` token. It means that a rare word - the one not included in the top 10,000 - appeared in this text.
+- Label: 12 -> winter_sport - Mapping strings to numbers (`word2idx`) and back (`idx2word`) works correctly.
+- Number of `<PAD>` tokens: 0 - In this particular text from the first batch, there were 128 words or more. Consequently, `truncation` occurred instead of `padding`.
 
 ## Tech
 - 'Python 3.10+'

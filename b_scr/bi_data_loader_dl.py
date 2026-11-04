@@ -22,16 +22,17 @@ class Vocabulary:
     Включает специальные токены <PAD> и <UNK>.
     """
     def __init__(self, max_size=None):
+        # резервируем первые два места в словаре для спецсимволов
         self.word2idx = {
-            ba_config.PAD_TOKEN: ba_config.PAD_IDX,
-            ba_config.UNK_TOKEN: ba_config.UNK_IDX
+            ba_config.PAD_TOKEN: ba_config.PAD_IDX, # <PAD> - 0
+            ba_config.UNK_TOKEN: ba_config.UNK_IDX # <UNK> - 1
         }
         self.idx2word = {
             ba_config.PAD_IDX: ba_config.PAD_TOKEN,
             ba_config.UNK_IDX: ba_config.UNK_TOKEN
         }
-        self.max_size = max_size
-        self.word_freq = Counter()
+        self.max_size = max_size # размера словаря (например, 10000)
+        self.word_freq = Counter() # Счетчик: будет хранить {'команда': 5000, 'мяч': 3000, ...}
         
     def build_vocab(self, texts):
         """
@@ -45,14 +46,14 @@ class Vocabulary:
             words = text.split()
             self.word_freq.update(words)
             
-        # Ограничиваем словарь
+        # Отбираем только самые частые слова
         if self.max_size:
             # Берем топ-(max_size - 2) слов, потому что 2 места заняты <PAD> и <UNK>
             most_common = self.word_freq.most_common(self.max_size - 2)
         else:
             most_common = self.word_freq.most_common()
             
-        # Добавляем слова в словарь
+        # Записываем отобранные слова в словарь, присваивая им номера по порядку
         for word, freq in most_common:
             idx = len(self.word2idx)
             self.word2idx[word] = idx
@@ -71,6 +72,7 @@ class Vocabulary:
         words = text.split()
         indices = []
         
+        # Переводим каждое слово в число
         for word in words:
             if word in self.word2idx:
                 indices.append(self.word2idx[word])
@@ -112,6 +114,7 @@ class TextDataset(Dataset):
             self.label_classes = sorted(set(labels))
             self.label2idx = {label: idx for idx, label in enumerate(self.label_classes)}
             self.idx2label = {idx: label for label, idx in self.label2idx.items()}
+            # Заменяем все строки в labels на числа
             self.encoded_labels = [self.label2idx[label] for label in labels]
         else:
             self.encoded_labels = labels
@@ -125,12 +128,14 @@ class TextDataset(Dataset):
         return len(self.texts)
     
     def __getitem__(self, idx):
+        # PyTorch вызывает этот метод, когда ему нужен ОДИН конкретный пример под номером idx
         text = self.texts[idx]
         label = self.encoded_labels[idx]
         
         # Превращаем текст в индексы с padding
         indices = self.vocabulary.text_to_indices(text, self.max_length)
         
+        # Превращаем обычные списки Python в тензоры PyTorch (dtype=torch.long означает целые числа)
         return torch.tensor(indices, dtype=torch.long), torch.tensor(label, dtype=torch.long)
   
 def create_dataloaders(train_texts, train_labels, val_texts, val_labels,
@@ -145,16 +150,17 @@ def create_dataloaders(train_texts, train_labels, val_texts, val_labels,
     """
     if batch_size is None:
         batch_size = ba_config.DL_BATCH_SIZE
-        
+    
+    # Если словарь еще не создан, создаем его ТОЛЬКО на тренировочных данных
     if vocabulary is None:
         vocabulary = Vocabulary(max_size=ba_config.MAX_VOCAB_SIZE)
         vocabulary.build_vocab(train_texts)
         
-    # Создаем Dataset
+    # Создаем Dataset - упаковщики
     train_dataset = TextDataset(train_texts, train_labels, vocabulary)
     val_dataset = TextDataset(val_texts, val_labels, vocabulary)
     
-    # Создаем DataLoader
+    # Создаем DataLoader - конвейер
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
