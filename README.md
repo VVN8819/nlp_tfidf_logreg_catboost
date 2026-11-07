@@ -18,8 +18,10 @@
 - [x] Pretrained Embeddings Inference (`ef_run_inference_embeddings.py` Logistic Regression and CatBoost)
 - [x] Exploratory Data Analysis (EDA) for Deep Learning (FCN, RNN, CNN)
 - [x] DataLoader for Deep Learning models (`bi_data_loader_dl.py`)
-- [ ] Fully connected network (FCN) class with Dropout (`bj_models_dl.py`)
-- [ ] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
+- [x] Fully connected network (FCN) class with Dropout (`bj_models_dl.py`)
+- [x] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
+- [x] Model training and comparison (FCN vs TF-IDF vs E5 Embeddings) (`eg_train_fcn.py`)
+- [ ] Inference Deep Learning (FCN)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -30,6 +32,7 @@ Sports news classifier with 13 categories: **winter_sport**, **football**, **ten
 Implemented models:
 - TF-IDF (Logistic Regression, CatBoost, CatBoost + TruncatedSVD)
 - Pretrained Embeddings (Logistic Regression, CatBoost)
+- Deep Learning (FCN)
 
 ## Fast start
 
@@ -61,6 +64,9 @@ python e_scripts/ed_extract_embeddings.py
 
 # Training LR and CatBoost models using the 384 features obtained
 python e_scripts/ee_train_embeddings.py
+
+# Training FCN
+python e_scripts/eg_train_fcn.py
 
 # Testing inference (prediction on new data)
 # Testing the TF-IDF pipeline
@@ -180,6 +186,9 @@ graph TD
     InferenceEmb -.->|"12. Category + Confidence"| RunInferenceEmb
 ```
 
+## Architecture Deep Learning (FCN)
+
+
 ## Project structure
 ```bash
 nlp_tfidf_logreg_catboost/
@@ -199,7 +208,10 @@ nlp_tfidf_logreg_catboost/
 │   ├── be_models.py                    # Model training (Logistic Regression, CatBoost)
 │   ├── bf_inference.py                 # Inference: making predictions on new data
 │   ├── bg_embedding_extractor.py       # Extracting embeddings in batches
-│   └── bh_inference_embeddings.py      # Embeddings Inference: making predictions on new data
+│   ├── bh_inference_embeddings.py      # Embeddings Inference: making predictions on new data
+│   ├── bi_data_loader_dl.py            # DataLoader for Deep Learning model
+│   ├── bj_models_dl.py                 # Deep Learning Model Architectures for Text Classification
+│   └── bk_training_utils.py            # Utilities for training deep learning models
 │
 ├── c_notebooks/                     #  Jupyter-notebooks for research
 │   ├── logs/                        # Script execution logs
@@ -213,18 +225,23 @@ nlp_tfidf_logreg_catboost/
 │   ├── catboost_model.cbm              # CatBoost model trained on raw TF-IDF features
 │   ├── catboost_model_svd.cbm          # CatBoost trained on features after SVD (150 components)
 │   ├── tfidf_vectorizer.joblib         # TF-IDF vectorizer for inference
-│   └── tfidf_svd_pipeline.joblib       # TF-IDF + SVD pipeline for inference
+│   ├── tfidf_svd_pipeline.joblib       # TF-IDF + SVD pipeline for inference
+│   ├── fcn_model.pt                    # Deep Learning (FCN) model weights
+│   └── dl_vocabulary.pt                # Deep Learning (FCN) mode dictionary and class mapping
 │
 ├──  e_scripts/                       # Entry points
 │   ├── ea_train_logistic_regression.py # Training Logistic Regression
 │   ├── eb_train_catboost.py            # Training CatBoost (with optional SVD)
 │   ├── ec_run_inference.py             # Testing inference using examples
-│   ├── ed_train_embeddings.py          # training LR and CatBoost on embeddings
-│   └── ee_run_inference_embeddings.py  # inference on embeddings + OOD check
+│   ├── ed_extract_embeddings.py        # Extracting embeddings from cleaned texts
+│   ├── ee_train_embeddings.py          # training LR and CatBoost on embeddings
+│   ├── ef_run_inference_embeddings.py  # inference on embeddings + OOD check
+│   └── eg_train_fcn.py                 # training FCN on text data
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── dl_text_lengths.png             # Text lengths for Deep Learning
 │   ├── dl_vocabulary.png               # Vocabulary Analysis for Deep Learning
+│   ├── fcn_training_history.png        # Cross-Entropy Loss and Classification Accuracy (FCN)
 │   ├── image-1.png                     # Text lengths (before cleaning)
 │   ├── image-2.png                     # Top 20 words (before cleaning)
 │   ├── image-3.png                     # Top 15 words in the 'football' category
@@ -558,6 +575,38 @@ Checking the first batch:
 - Example of text (first 20 indices): tensor([138, 429, 955, 429, 2026, 7371, 3182, 405, 124, 7763, 827, 965, 156, 746, 2389, 1866, **1**, 81, 4384, 340]) - The **1** in the tensor is our `<UNK>` token. It means that a rare word - the one not included in the top 10,000 - appeared in this text.
 - Label: 12 -> winter_sport - Mapping strings to numbers (`word2idx`) and back (`idx2word`) works correctly.
 - Number of `<PAD>` tokens: 0 - In this particular text from the first batch, there were 128 words or more. Consequently, `truncation` occurred instead of `padding`.
+
+### Analysis of results after training FCN on text data
+1. **Early stopping worked perfectly:**
+- The model continued to improve up to **the 7th epoch** (Val Acc: `75.98%`, Val Loss: `0.9031`).
+- There were **no improvements** during epochs 8, 9, and 10.
+- At the 10th epoch, the `patience=3` condition was met, training stopped, and the script automatically reverted the model weights to those from the best epoch - the 7th. **This saved the model from overfitting.**
+```bash
+2026-11-07 23:15:13,505 - INFO - Starting training
+ - Starting training on the device: CPU
+ - Epoch 1: New record! Val Loss: 1.7282, Val Acc: 0.4920                          
+ - Epoch 2: New record! Val Loss: 1.2825, Val Acc: 0.6296                          
+ - Epoch 3: New record! Val Loss: 1.1007, Val Acc: 0.6843                          
+ - Epoch 4: New record! Val Loss: 1.0055, Val Acc: 0.7147                          
+ - Epoch 5: New record! Val Loss: 0.9633, Val Acc: 0.7362                          
+ - Epoch 6: New record! Val Loss: 0.9220, Val Acc: 0.7460                          
+ - Epoch 7: New record! Val Loss: 0.9031, Val Acc: 0.7598
+ - Epoch 8: No improvement (1/3)
+ - Epoch 9: No improvement (2/3)
+ - Epoch 10: No improvement (3/3)
+ - Early stopping triggered at epoch 10.
+ - The best weights were from the epoch 7 with Val Loss: 0.9031
+```
+![Статистика словаря](plots/fcn_training_history.png)
+
+### Final accuracy (FCN): 77.62%
+Let’s compare this with previous experiments:
+- TF-IDF + Logistic Regression: **81.29%**
+- E5 Embeddings + Logistic Regression: 75.72%
+- E5 Embeddings + CatBoost: 72.01%
+- FCN (word embeddings learned from scratch) + FCN: **77.62%**
+
+**Simple FCN** - which learned word representations from scratch (via `nn.Embedding`) specifically on this sports dataset - **outperformed the heavy, pre-trained E5 embeddings**. This proves that for highly specialized domains (like sport), training your own embeddings from scratch often works better than using general-purpose models.
 
 ## Tech
 - 'Python 3.10+'

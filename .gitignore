@@ -9,6 +9,7 @@ d_models/*.pkl
 d_models/*.cbm
 d_models/*.pth
 d_models/*.joblib
+d_models/*.pt
 
 # Python
 __pycache__/

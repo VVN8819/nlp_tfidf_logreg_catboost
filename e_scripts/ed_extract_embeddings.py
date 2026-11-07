@@ -1,4 +1,4 @@
-# ed_extract_embeddings.
+# ed_extract_embeddings.py
 
 """
 Скрипт для извлечения эмбеддингов из очищенных текстов.

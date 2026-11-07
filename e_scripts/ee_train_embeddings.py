@@ -1,4 +1,4 @@
-# ee_train_embeddings.py#
+# ee_train_embeddings.py
 
 """
 Скрипт для обучения моделей на плотных эмбеддингах (E5).
@@ -10,7 +10,7 @@ import pandas as pd
 import logging
 
 # Добавляем корень проекта в пути
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))#
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from b_scr import ba_config
 from b_scr.be_models import train_logistic_regression, train_catboost
