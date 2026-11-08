@@ -21,7 +21,7 @@
 - [x] Fully connected network (FCN) class with Dropout (`bj_models_dl.py`)
 - [x] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
 - [x] Model training and comparison (FCN vs TF-IDF vs E5 Embeddings) (`eg_train_fcn.py`)
-- [ ] Inference Deep Learning (FCN)
+- [x] Inference Deep Learning (FCN) (`eh_run_inference_dl.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -74,6 +74,9 @@ python e_scripts/ec_run_inference.py
 
 # Testing the pipeline using embeddings (including checks for OOD data)
 python e_scripts/ef_run_inference_embeddings.py
+
+# Testing Deep Learning (FCN) model inference
+python e_scripts/eh_run_inference_dl.py
 ```
 
 ## Project Architecture
@@ -187,7 +190,53 @@ graph TD
 ```
 
 ## Architecture Deep Learning (FCN)
+```mermaid
+graph TD
+    %% Стили (идентичны предыдущим диаграммам)
+    classDef data fill:#f9f2f4,stroke:#c7254e,stroke-width:2px,rx:5,ry:5
+    classDef module fill:#e8f4f8,stroke:#2980b9,stroke-width:2px,rx:5,ry:5
+    classDef script fill:#fff2cc,stroke:#d6b656,stroke-width:2px,rx:5,ry:5
+    classDef model fill:#e2f0d9,stroke:#548235,stroke-width:2px,rx:5,ry:5
+    classDef notebook fill:#f0e6ff,stroke:#8e44ad,stroke-width:2px,rx:5,ry:5
 
+    %% Узлы: Данные
+    ProcessedData[("a_data/ab_processed/<br/>preprocessed_train.csv")]:::data
+
+    %% Узлы: Модули (b_scr)
+    Preprocessing["b_scr/bc_preprocessing.py<br/>Cleaning + lemmatization<br/>(spaCy + NLTK)"]:::module
+    DataLoader["b_scr/bi_data_loader_dl.py<br/>Vocabulary, Padding, Truncation<br/>(Text to Tensors)"]:::module
+    Models["b_scr/bj_models_dl.py<br/>TextFCN<br/>(Embedding -> Masked Pooling -> FC)"]:::module
+    TrainingUtils["b_scr/bk_training_utils.py<br/>Training loop + Early Stopping"]:::module
+    InferenceDL["e_scripts/eh_run_inference_dl.py<br/>Inference logic<br/>(Preprocess -> Tokenize -> Predict)"]:::module
+
+    %% Узлы: Скрипты (e_scripts)
+    TrainFCN["e_scripts/eg_train_fcn.py"]:::script
+    RunInferenceDL["e_scripts/eh_run_inference_dl.py"]:::script
+
+    %% Узлы: Артефакты (d_models & plots)
+    SavedModelsDL[("d_models/<br/>fcn_model.pt<br/>dl_vocabulary.pt")]:::model
+    SavedPlotsDL[("plots/<br/>fcn_training_history.png")]:::model
+
+    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ =====
+    ProcessedData -->|"1. Reading cleaned texts"| TrainFCN
+    TrainFCN -->|"2. Building Vocabulary &<br/>Padding/Truncation"| DataLoader
+    DataLoader -->|"3. Creating PyTorch DataLoaders"| TrainFCN
+    TrainFCN -->|"4. Initializing TextFCN"| Models
+    Models -->|"5. Forward/Backward pass"| TrainingUtils
+    TrainingUtils -->|"6. Saving best weights & vocab"| SavedModelsDL
+    TrainingUtils -->|"7. Saving training plots"| SavedPlotsDL
+
+    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС =====
+    RunInferenceDL -.->|"Receives new raw text"| InferenceDL
+    InferenceDL -.->|"8. preprocess_text()"| Preprocessing
+    InferenceDL -.->|"9. Load dl_vocabulary.pt"| SavedModelsDL
+    SavedModelsDL -.->|"10. Word2Idx mapping"| InferenceDL
+    InferenceDL -.->|"11. Tokenize, Pad, Truncate<br/>(to MAX_SEQ_LENGTH)"| DataLoader
+    DataLoader -.->|"12. PyTorch Tensor [1, 121]"| InferenceDL
+    InferenceDL -.->|"13. Load fcn_model.pt"| SavedModelsDL
+    SavedModelsDL -.->|"14. model.forward() + Softmax"| InferenceDL
+    InferenceDL -.->|"15. Category + Confidence"| RunInferenceDL
+```
 
 ## Project structure
 ```bash
@@ -236,7 +285,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── ed_extract_embeddings.py        # Extracting embeddings from cleaned texts
 │   ├── ee_train_embeddings.py          # training LR and CatBoost on embeddings
 │   ├── ef_run_inference_embeddings.py  # inference on embeddings + OOD check
-│   └── eg_train_fcn.py                 # training FCN on text data
+│   ├── eg_train_fcn.py                 # training FCN on text data
+│   └── eh_run_inference_dl.py          # inference FCN
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── dl_text_lengths.png             # Text lengths for Deep Learning
@@ -338,11 +388,11 @@ winter_sport       0.81      0.84      0.83       437
    macro avg       0.83      0.81      0.82      5724
 weighted avg       0.83      0.81      0.82      5724
 ```
-Champions (F1 > 0.85):
+**Champions** (F1 > 0.85):
 - `tennis` (0.94), `board games` (0.91), `athletics` (0.89), `volleyball` (0.84), `autosport` (0.85), and `motorsports` (0.85).
 - These categories have a very specific vocabulary. Terms such as `шлем`, `трасса`, `шайба`, `настольная` and `спринт` appear almost exclusively within their respective categories. TF-IDF assigns them very high weights, making them easy for the model to detect.
 
-Underperformers (F1 < 0.75):
+**Underperformers** (F1 < 0.75):
 - `extreme` (0.64), `esport` (0.69), `martial arts` (0.75), and `football` (0.78).
 - Overlapping vocabulary: Words like `игра`, `матч`, `победа`, `команда`, and `турнир` are used across all these categories. TF-IDF identifies these as high-frequency terms and lowers their weight.
 - Class similarity: `extreme` and `martial arts` may describe similar actions (e.g., `удар`, `тренировка`, `соревнование`). `esport` may employ terminology similar to that used for conventional games.
@@ -499,10 +549,10 @@ weighted avg       0.73      0.72      0.72      5724
 During the development process, a comparison was made between three approaches to text vectorization and two classification algorithms:
 ```bash
 | Model               | Vectorizer            | Size   | Accuracy (Val) | Training time |
-| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 сек        |
-| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 мин      |
-| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 сек        |
-| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 мин      |
+| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 sec        |
+| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 min      |
+| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 sec        |
+| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 min      |
 ```
 
 ### Key takeaways:
@@ -599,14 +649,34 @@ Checking the first batch:
 ```
 ![Статистика словаря](plots/fcn_training_history.png)
 
-### Final accuracy (FCN): 77.62%
-Let’s compare this with previous experiments:
-- TF-IDF + Logistic Regression: **81.29%**
-- E5 Embeddings + Logistic Regression: 75.72%
-- E5 Embeddings + CatBoost: 72.01%
-- FCN (word embeddings learned from scratch) + FCN: **77.62%**
+**Final accuracy (FCN)**: 77.62%
 
-**Simple FCN** - which learned word representations from scratch (via `nn.Embedding`) specifically on this sports dataset - **outperformed the heavy, pre-trained E5 embeddings**. This proves that for highly specialized domains (like sport), training your own embeddings from scratch often works better than using general-purpose models.
+### Inference analysis of a Deep Learning model (FCN)
+
+Beyond accuracy metrics, the model’s behavior on new data is critically important. Testing on control cases has shown:
+```bash
+| Test      | Prediction | Confidence | Comment                                                             |
+| Football  | football   | 78.64%     | Confidence is slightly lower due to general terms                   |
+|           |            |            | (`сборная`, `победа`) that are also common in other sports          |
+| F-1       | autosport  | 100.00%    | The model has learned specific semantic clusters exceptionally well |
+| Café (OOD)| volleyball | 40.95%     | Confidence drops sharply, as the model "realizes" that the text     |
+|           |            |            | is far removed from the realm of sports                             |
+| Garbage   | Rejected   | 0.00%      | The preprocessing step correctly filters out empty input before it  |
+|           |            |            | reaches the neural network stage                                    |
+```
+
+### Selection of the model
+Let’s compare this with previous experiments:
+```bash
+| Model               | Vectorizer            | Size   | Accuracy (Val) | Training time |
+| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 sec        |
+| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 min      |
+| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 sec        |
+| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 min      |
+| FCN (PyTorch)       | Word Embeddings       | 100    | 77.62%         | ~30 sec       |
+```
+
+**Conclusion:** A simple FCN architecture with learnable embeddings proved to be a robust solution (`77.62% accuracy`), outperforming heavy pre-trained embeddings (`E5 + LR: 75.72%`) due to better adaptation to the specific sports slang present in the dataset. This proves that for highly specialized domains (like sport), training your own embeddings from scratch often works better than using general-purpose models.
 
 ## Tech
 - 'Python 3.10+'
