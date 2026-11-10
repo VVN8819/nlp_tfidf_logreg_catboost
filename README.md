@@ -22,6 +22,9 @@
 - [x] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
 - [x] Model training and comparison (FCN vs TF-IDF vs E5 Embeddings) (`eg_train_fcn.py`)
 - [x] Inference Deep Learning (FCN) (`eh_run_inference_dl.py`)
+- [ ] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
+- [ ] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
+- [ ] Inference Deep Learning (RNN)
 - [ ] Final documentation
 
 # Sports Text Classifier 
