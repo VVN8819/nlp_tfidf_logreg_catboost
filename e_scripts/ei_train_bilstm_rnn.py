@@ -52,9 +52,10 @@ def main():
     model = TextBiLSTM(
         vocab_size=vocab_size,
         embedding_dim=ba_config.EMBEDDING_DIM,
-        num_classes=num_classes,
         hidden_dim=ba_config.DL_HIDDEN_DIM,
-        dropout=ba_config.DL_DROPOUT
+        num_layers=ba_config.DL_NUM_LAYERS,
+        num_classes=num_classes,
+        dropout_rate=ba_config.DL_DROPOUT
     )
     model = model.to(device)
     

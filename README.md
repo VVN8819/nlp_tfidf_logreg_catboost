@@ -22,8 +22,8 @@
 - [x] Unified training function with Early Stopping (FCN, RNN, CNN) (`bk_training_utils.py`)
 - [x] Model training and comparison (FCN vs TF-IDF vs E5 Embeddings) (`eg_train_fcn.py`)
 - [x] Inference Deep Learning (FCN) (`eh_run_inference_dl.py`)
-- [ ] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
-- [ ] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
+- [x] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
+- [x] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
 - [ ] Inference Deep Learning (RNN)
 - [ ] Final documentation
 
@@ -35,7 +35,7 @@ Sports news classifier with 13 categories: **winter_sport**, **football**, **ten
 Implemented models:
 - TF-IDF (Logistic Regression, CatBoost, CatBoost + TruncatedSVD)
 - Pretrained Embeddings (Logistic Regression, CatBoost)
-- Deep Learning (FCN)
+- Deep Learning (FCN, RNN)
 
 ## Fast start
 
@@ -70,6 +70,9 @@ python e_scripts/ee_train_embeddings.py
 
 # Training FCN
 python e_scripts/eg_train_fcn.py
+
+# Training RNN
+python e_scripts/ei_train_bilstm_rnn.py
 
 # Testing inference (prediction on new data)
 # Testing the TF-IDF pipeline
@@ -279,7 +282,9 @@ nlp_tfidf_logreg_catboost/
 │   ├── tfidf_vectorizer.joblib         # TF-IDF vectorizer for inference
 │   ├── tfidf_svd_pipeline.joblib       # TF-IDF + SVD pipeline for inference
 │   ├── fcn_model.pt                    # Deep Learning (FCN) model weights
-│   └── dl_vocabulary.pt                # Deep Learning (FCN) mode dictionary and class mapping
+│   ├── dl_vocabulary.pt                # Deep Learning (FCN) mode dictionary and class mapping
+│   ├── bilstm_model.pt                 # Deep Learning (RNN) model weights
+│   └── bilstm_vocabulary.pt            # Deep Learning (RNN) mode dictionary and class mapping
 │
 ├──  e_scripts/                       # Entry points
 │   ├── ea_train_logistic_regression.py # Training Logistic Regression
@@ -289,12 +294,14 @@ nlp_tfidf_logreg_catboost/
 │   ├── ee_train_embeddings.py          # training LR and CatBoost on embeddings
 │   ├── ef_run_inference_embeddings.py  # inference on embeddings + OOD check
 │   ├── eg_train_fcn.py                 # training FCN on text data
-│   └── eh_run_inference_dl.py          # inference FCN
+│   ├── eh_run_inference_dl.py          # inference FCN
+│   └── ei_train_bilstm_rnn.py          # training RNN on text data
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── dl_text_lengths.png             # Text lengths for Deep Learning
 │   ├── dl_vocabulary.png               # Vocabulary Analysis for Deep Learning
 │   ├── fcn_training_history.png        # Cross-Entropy Loss and Classification Accuracy (FCN)
+│   ├── bilstm_training_history.png     # Cross-Entropy Loss and Classification Accuracy (RNN)
 │   ├── image-1.png                     # Text lengths (before cleaning)
 │   ├── image-2.png                     # Top 20 words (before cleaning)
 │   ├── image-3.png                     # Top 15 words in the 'football' category
@@ -680,6 +687,39 @@ Let’s compare this with previous experiments:
 ```
 
 **Conclusion:** A simple FCN architecture with learnable embeddings proved to be a robust solution (`77.62% accuracy`), outperforming heavy pre-trained embeddings (`E5 + LR: 75.72%`) due to better adaptation to the specific sports slang present in the dataset. This proves that for highly specialized domains (like sport), training your own embeddings from scratch often works better than using general-purpose models.
+
+### Analysis of results after training RNN on text data
+1. **Early stopping worked perfectly:**
+- The model continued to improve up to **the 17th epoch** (Val Acc: `79.72%`, Val Loss: `0.7624`).
+- There were **no improvements** during epochs 18, 19, and 20.
+- At the 20th epoch, the `patience=3` condition was met, training stopped, and the script automatically reverted the model weights to those from the best epoch - the 17th. **This saved the model from overfitting.**
+```bash
+ - Epoch 1: New record! Val Loss: 1.5868, Val Acc: 0.4878
+ - Epoch 2: New record! Val Loss: 1.2075, Val Acc: 0.6188
+ - Epoch 3: New record! Val Loss: 1.0480, Val Acc: 0.6709
+ - Epoch 4: New record! Val Loss: 0.9664, Val Acc: 0.6965
+ - Epoch 5: New record! Val Loss: 0.9080, Val Acc: 0.7224
+ - Epoch 6: New record! Val Loss: 0.8776, Val Acc: 0.7310
+ - Epoch 7: New record! Val Loss: 0.8532, Val Acc: 0.7442
+ - Epoch 8: New record! Val Loss: 0.8138, Val Acc: 0.7589
+ - Epoch 9: No improvement (1/3)                    
+ - Epoch 10: New record! Val Loss: 0.7961, Val Acc: 0.7680
+ - Epoch 11: No improvement (1/3)                    
+ - Epoch 12: New record! Val Loss: 0.7765, Val Acc: 0.7823
+ - Epoch 13: No improvement (1/3)              
+ - Epoch 14: New record! Val Loss: 0.7735, Val Acc: 0.7886
+ - Epoch 15: No improvement (1/3)                      
+ - Epoch 16: No improvement (2/3)                 
+ - Epoch 17: New record! Val Loss: 0.7624, Val Acc: 0.7972
+ - Epoch 18: No improvement (1/3)
+ - Epoch 19: No improvement (2/3)
+ - Epoch 20: No improvement (3/3)
+ - Early Stopping triggered at epoch 20.
+ - The best weights were from the epoch 17 with Val Loss: 0.7624
+```
+![Статистика словаря](plots/bilstm_training_history.png)
+
+**Final accuracy (RNN)**: 79.72%
 
 ## Tech
 - 'Python 3.10+'
