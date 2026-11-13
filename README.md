@@ -24,7 +24,7 @@
 - [x] Inference Deep Learning (FCN) (`eh_run_inference_dl.py`)
 - [x] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
 - [x] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
-- [ ] Inference Deep Learning (RNN)
+- [x] Inference Deep Learning (RNN) (`ej_run_inference_rnn.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -83,10 +83,13 @@ python e_scripts/ef_run_inference_embeddings.py
 
 # Testing Deep Learning (FCN) model inference
 python e_scripts/eh_run_inference_dl.py
+
+# Testing Deep Learning (RNN) model inference
+python e_scripts/ej_run_inference_rnn.py
 ```
 
 ## Project Architecture
-The project implements two independent text classification pipelines, which are compared based on accuracy, training speed, and inference quality.
+During the study, 6 different pipelines were tested, ranging from classical machine learning to modern deep learning architectures, which are compared based on accuracy, training speed, and inference quality.
 
 ## Architecture TF-IDF + TruncatedSVD
 ```mermaid
@@ -195,53 +198,79 @@ graph TD
     InferenceEmb -.->|"12. Category + Confidence"| RunInferenceEmb
 ```
 
-## Architecture Deep Learning (FCN)
+## Architecture Deep Learning (FCN & BiLSTM + Attention)
 ```mermaid
 graph TD
-    %% Стили (идентичны предыдущим диаграммам)
+    %% Стили
     classDef data fill:#f9f2f4,stroke:#c7254e,stroke-width:2px,rx:5,ry:5
     classDef module fill:#e8f4f8,stroke:#2980b9,stroke-width:2px,rx:5,ry:5
     classDef script fill:#fff2cc,stroke:#d6b656,stroke-width:2px,rx:5,ry:5
     classDef model fill:#e2f0d9,stroke:#548235,stroke-width:2px,rx:5,ry:5
     classDef notebook fill:#f0e6ff,stroke:#8e44ad,stroke-width:2px,rx:5,ry:5
 
-    %% Узлы: Данные
-    ProcessedData[("a_data/ab_processed/<br/>preprocessed_train.csv")]:::data
+    %% ===== ОБЩИЕ УЗЛЫ =====
+    ProcessedData[(" a_data/ab_processed/<br/>preprocessed_train.csv")]:::data
 
-    %% Узлы: Модули (b_scr)
-    Preprocessing["b_scr/bc_preprocessing.py<br/>Cleaning + lemmatization<br/>(spaCy + NLTK)"]:::module
-    DataLoader["b_scr/bi_data_loader_dl.py<br/>Vocabulary, Padding, Truncation<br/>(Text to Tensors)"]:::module
-    Models["b_scr/bj_models_dl.py<br/>TextFCN<br/>(Embedding -> Masked Pooling -> FC)"]:::module
-    TrainingUtils["b_scr/bk_training_utils.py<br/>Training loop + Early Stopping"]:::module
-    InferenceDL["e_scripts/eh_run_inference_dl.py<br/>Inference logic<br/>(Preprocess -> Tokenize -> Predict)"]:::module
+    Preprocessing[" b_scr/bc_preprocessing.py<br/>Cleaning + lemmatization<br/>(spaCy + NLTK)"]:::module
+    DataLoader[" b_scr/bi_data_loader_dl.py<br/>Vocabulary, Padding, Truncation<br/>(Text → Tensors)"]:::module
+    Models[" b_scr/bj_models_dl.py<br/>TextFCN: Embedding → Masked Pooling → FC<br/>TextBiLSTM: Embedding → BiLSTM → Attention → FC"]:::module
+    TrainingUtils[" b_scr/bk_training_utils.py<br/>Universal training loop + Early Stopping"]:::module
 
-    %% Узлы: Скрипты (e_scripts)
-    TrainFCN["e_scripts/eg_train_fcn.py"]:::script
-    RunInferenceDL["e_scripts/eh_run_inference_dl.py"]:::script
+    %% ===== СКРИПТЫ ОБУЧЕНИЯ =====
+    TrainFCN[" e_scripts/eg_train_fcn.py"]:::script
+    TrainRNN[" e_scripts/ei_train_bilstm_rnn.py"]:::script
 
-    %% Узлы: Артефакты (d_models & plots)
-    SavedModelsDL[("d_models/<br/>fcn_model.pt<br/>dl_vocabulary.pt")]:::model
-    SavedPlotsDL[("plots/<br/>fcn_training_history.png")]:::model
+    %% ===== СКРИПТЫ ИНФЕРЕНСА =====
+    RunInferenceFCN[" e_scripts/eh_run_inference_dl.py"]:::script
+    RunInferenceRNN[" e_scripts/ej_run_inference_rnn.py"]:::script
 
-    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ =====
+    %% ===== АРТЕФАКТЫ: FCN =====
+    FCNModels[(" d_models/<br/>fcn_model.pt<br/>fcn_vocabulary.pt")]:::model
+    FCNPlots[(" plots/<br/>fcn_training_history.png")]:::model
+
+    %% ===== АРТЕФАКТЫ: BiLSTM =====
+    BiLSTMModels[(" d_models/<br/>bilstm_model.pt<br/>bilstm_vocabulary.pt")]:::model
+    BiLSTMPlots[(" plots/<br/>bilstm_training_history.png")]:::model
+
+    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ FCN =====
     ProcessedData -->|"1. Reading cleaned texts"| TrainFCN
     TrainFCN -->|"2. Building Vocabulary &<br/>Padding/Truncation"| DataLoader
     DataLoader -->|"3. Creating PyTorch DataLoaders"| TrainFCN
     TrainFCN -->|"4. Initializing TextFCN"| Models
     Models -->|"5. Forward/Backward pass"| TrainingUtils
-    TrainingUtils -->|"6. Saving best weights & vocab"| SavedModelsDL
-    TrainingUtils -->|"7. Saving training plots"| SavedPlotsDL
+    TrainingUtils -->|"6. Saving best weights & vocab"| FCNModels
+    TrainingUtils -->|"7. Saving training plots"| FCNPlots
 
-    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС =====
-    RunInferenceDL -.->|"Receives new raw text"| InferenceDL
-    InferenceDL -.->|"8. preprocess_text()"| Preprocessing
-    InferenceDL -.->|"9. Load dl_vocabulary.pt"| SavedModelsDL
-    SavedModelsDL -.->|"10. Word2Idx mapping"| InferenceDL
-    InferenceDL -.->|"11. Tokenize, Pad, Truncate<br/>(to MAX_SEQ_LENGTH)"| DataLoader
-    DataLoader -.->|"12. PyTorch Tensor [1, 121]"| InferenceDL
-    InferenceDL -.->|"13. Load fcn_model.pt"| SavedModelsDL
-    SavedModelsDL -.->|"14. model.forward() + Softmax"| InferenceDL
-    InferenceDL -.->|"15. Category + Confidence"| RunInferenceDL
+    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ BiLSTM =====
+    ProcessedData -->|"1. Reading cleaned texts"| TrainRNN
+    TrainRNN -->|"2. Building Vocabulary &<br/>Padding/Truncation"| DataLoader
+    DataLoader -->|"3. Creating PyTorch DataLoaders"| TrainRNN
+    TrainRNN -->|"4. Initializing TextBiLSTM<br/>+ Attention"| Models
+    Models -->|"5. Forward/Backward pass"| TrainingUtils
+    TrainingUtils -->|"6. Saving best weights & vocab"| BiLSTMModels
+    TrainingUtils -->|"7. Saving training plots"| BiLSTMPlots
+
+    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС FCN =====
+    RunInferenceFCN -.->|"Receives new raw text"| Preprocessing
+    Preprocessing -.->|"8. Cleaned text"| RunInferenceFCN
+    RunInferenceFCN -.->|"9. Load fcn_vocabulary.pt"| FCNModels
+    FCNModels -.->|"10. Word2Idx mapping"| RunInferenceFCN
+    RunInferenceFCN -.->|"11. Tokenize, Pad, Truncate<br/>(to MAX_SEQ_LENGTH)"| DataLoader
+    DataLoader -.->|"12. PyTorch Tensor [1, 128]"| RunInferenceFCN
+    RunInferenceFCN -.->|"13. Load fcn_model.pt"| FCNModels
+    FCNModels -.->|"14. model.forward() + Softmax"| RunInferenceFCN
+    RunInferenceFCN -.->|"15. Category + Confidence"| RunInferenceFCN
+
+    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС BiLSTM =====
+    RunInferenceRNN -.->|"Receives new raw text"| Preprocessing
+    Preprocessing -.->|"8. Cleaned text"| RunInferenceRNN
+    RunInferenceRNN -.->|"9. Load bilstm_vocabulary.pt"| BiLSTMModels
+    BiLSTMModels -.->|"10. Word2Idx mapping"| RunInferenceRNN
+    RunInferenceRNN -.->|"11. Tokenize, Pad, Truncate<br/>(to MAX_SEQ_LENGTH)"| DataLoader
+    DataLoader -.->|"12. PyTorch Tensor [1, 128]"| RunInferenceRNN
+    RunInferenceRNN -.->|"13. Load bilstm_model.pt"| BiLSTMModels
+    BiLSTMModels -.->|"14. model.forward() + Softmax"| RunInferenceRNN
+    RunInferenceRNN -.->|"15. Category + Confidence"| RunInferenceRNN
 ```
 
 ## Project structure
@@ -675,7 +704,7 @@ Beyond accuracy metrics, the model’s behavior on new data is critically import
 |           |            |            | reaches the neural network stage                                    |
 ```
 
-### Selection of the model
+### Selection of the model after FCN
 Let’s compare this with previous experiments:
 ```bash
 | Model               | Vectorizer            | Size   | Accuracy (Val) | Training time |
@@ -720,6 +749,35 @@ Let’s compare this with previous experiments:
 ![Статистика словаря](plots/bilstm_training_history.png)
 
 **Final accuracy (RNN)**: 79.72%
+
+**Why did BiLSTM win?**
+- **Accounting for sequence**: BiLSTM understands that "Messi scored a goal" and "A goal was scored by Messi" mean the same thing, whereas an FCN sees only a collection of words.
+- **Attention works**: The attention mechanism learned to ignore stop words and `<PAD>` tokens, focusing instead on key tokens (`команда`, `гол`, `матч`).
+- **Bidirectionality**: The model "reads" the text from left to right and from right to left, capturing the full context of each word.
+
+### Inference analysis of a Recurrent neural network (RNN)
+
+No model is perfect. BiLSTM has a better grasp of context, but it can fall victim to strong biases present in the training data.
+```bash
+| Test      | Prediction | Confidence | Comment                                                             |
+| Football  | hockey     | 75.43%     | This is a classic example of how a neural network learns from       | 
+|           |            |            | statistical correlations in data, rather than from "common sense."  |
+| Café (OOD)| esport     | 57.27%     | In the training dataset, the words "друзья", "весело" and "заказ"   |
+|           |            |            | might have frequently appeared in texts about esports tournaments.  |
+```
+### Selection of the model after RNN
+Let’s compare this with previous experiments:
+```bash
+| Model               | Vectorizer            | Size   | Accuracy (Val) | Training time |
+| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 sec        |
+| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 min      |
+| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 sec        |
+| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 min      |
+| FCN (PyTorch)       | Word Embeddings       | 100    | 77.62%         | ~30 sec       |
+| BiLSTM + Attention  | Word Embeddings       | 256×2  | 79.72%         | ~90 min       |
+```
+
+**Conclusion:** `BiLSTM + Attention` took second place (**79.72%**). The attention mechanism successfully learned to ignore `<PAD>` tokens and focus on key terms. However, the model proved to be more than 100 times slower to train and demonstrated a vulnerability to statistical biases in the data (for example, confidently classifying a text about `football` as `hockey` because the phrase "сборная России" was strongly correlated with hockey in the dataset).
 
 ## Tech
 - 'Python 3.10+'
