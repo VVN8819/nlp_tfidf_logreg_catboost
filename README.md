@@ -25,8 +25,8 @@
 - [x] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
 - [x] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
 - [x] Inference Deep Learning (RNN) (`ej_run_inference_rnn.py`)
-- [ ] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
-- [ ] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
+- [x] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
+- [x] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
 - [ ] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
 - [ ] Final documentation
 
