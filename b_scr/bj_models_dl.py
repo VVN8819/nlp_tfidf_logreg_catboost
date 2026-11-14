@@ -1,11 +1,12 @@
 # bj_models_dl.py
 
 """
-Архитектуры Deep Learning моделей для классификации текстов.
+Архитектуры Deep Learning моделей для классификации текстов (FCN, RNN, CNN).
 """
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from . import ba_config
 
 class TextFCN(nn.Module):
@@ -17,7 +18,11 @@ class TextFCN(nn.Module):
         super(TextFCN, self).__init__()
         
         # 1. Embedding слой
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=ba_config.PAD_IDX)
+        self.embedding = nn.Embedding(
+            vocab_size,
+            embedding_dim,
+            padding_idx=ba_config.PAD_IDX
+        )
         
         # 2. Полносвязные слои
         self.fc1 = nn.Linear(embedding_dim, hidden_dim)
@@ -77,7 +82,7 @@ class TextBiLSTM(nn.Module):
     def __init__(self, vocab_size, embedding_dim, hidden_dim, num_layers, num_classes, dropout_rate=0.3):
         super().__init__()
         
-        # Щит 1: Embedding с ОБЯЗАТЕЛЬНЫМ padding_idx!
+        # Щит 1: Embedding с ОБЯЗАТЕЛЬНЫМ padding_idx
         self.embedding = nn.Embedding(
             vocab_size,
             embedding_dim,
@@ -128,8 +133,78 @@ class TextBiLSTM(nn.Module):
         
         return out
         
-    
-    
+class TextCNN(nn.Module):
+    """
+    Одномерная свёрточная сеть (CNN-1D) для классификации текстов.
+    Архитектура: Embedding -> Multi-scale Conv1d -> Global Max Pooling -> FC -> Output
+    """
+    def __init__(self, vocab_size, embedding_dim, num_classes,
+                 filter_sizes, num_filters, dropout_rate=0.5):
+        super().__init__()
+        
+        # Щит 1: Embedding с padding_idx
+        self.embedding = nn.Embedding(
+            vocab_size,
+            embedding_dim,
+            padding_idx=ba_config.PAD_IDX
+        )
+        self.embed_dropout = nn.Dropout(dropout_rate)
+        
+        # Множество сверточных слоев с разными размерами ядер
+        # Каждый фильтр ищет паттерны разной длины (3, 4, 5 слов)
+        self.convs = nn.ModuleList([
+            nn.Sequential(
+                nn.Conv1d(
+                    in_channels=embedding_dim,
+                    out_channels=num_filters,
+                    kernel_size=fs
+                ),
+                nn.ReLU(),
+                nn.Dropout(dropout_rate) # после каждой свертки
+            ) for fs in filter_sizes
+        ])
+        
+        # Global Max Pooling + финальный классификатор
+        # Входная размерность: num_filters * len(filter_sizes)
+        self.fc_dropout = nn.Dropout(dropout_rate)
+        self.fc = nn.Linear(num_filters * len(filter_sizes), num_classes)
+        
+    def forward(self, x):
+        # x: (batch_size, seq_length)
+
+        # 1. Превращаем индексы слов в векторы
+        embedded = self.embedding(x)
+        
+        # 2. Применяем Dropout к эмбеддингам
+        embedded = self.embed_dropout(embedded)
+        
+        # 3. Conv1d ожидает (batch, channels, seq_length)
+        # Поэтому меняем оси местами
+        embedded = embedded.permute(0, 2, 1) # (batch_size, embedding_dim, seq_length)
+        
+        # 4. Применяем свертки с разными размерами ядер и Global Max Pooling
+        pooled_outputs = []
+        for conv in self.convs:
+            # conv_out: (batch_size, num_filters, seq_length - kernel_size + 1)
+            conv_output = conv(embedded)
+            # Global Max Pooling - берем максимум по всей длине последовательности
+            # Это аналог "найти самое сильное срабатывание фильтра в любом месте текста"
+            pooled = F.max_pool1d(conv_output, conv_output.shape[2]).squeeze(2)
+            pooled_outputs.append(pooled)
+            
+        # 5. Конкатенируем результаты всех свёрток
+        # cat: (batch_size, num_filters * len(filter_sizes))
+        cat = torch.cat(pooled_outputs, dim=1)
+        
+        # 6. Применяем Dropout перед классификацией
+        cat = self.fc_dropout(cat)
+        
+        # 7. Финальное предсказание
+        out = self.fc(cat) # (batch_size, num_classes)
+        
+        return out
+        
+        
     
     
     
