@@ -25,6 +25,9 @@
 - [x] Recurrent neural network (RNN) class with Dropout and Attention (`bj_models_dl.py`)
 - [x] Model training and comparison (RNN vs TF-IDF vs E5 Embeddings) (`ei_train_bilstm_rnn.py`)
 - [x] Inference Deep Learning (RNN) (`ej_run_inference_rnn.py`)
+- [ ] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
+- [ ] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
+- [ ] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -35,7 +38,7 @@ Sports news classifier with 13 categories: **winter_sport**, **football**, **ten
 Implemented models:
 - TF-IDF (Logistic Regression, CatBoost, CatBoost + TruncatedSVD)
 - Pretrained Embeddings (Logistic Regression, CatBoost)
-- Deep Learning (FCN, RNN)
+- Deep Learning (FCN, RNN, CNN)
 
 ## Fast start
 
@@ -89,7 +92,7 @@ python e_scripts/ej_run_inference_rnn.py
 ```
 
 ## Project Architecture
-During the study, 6 different pipelines were tested, ranging from classical machine learning to modern deep learning architectures, which are compared based on accuracy, training speed, and inference quality.
+During the study, 7 different pipelines were tested, ranging from classical machine learning to modern deep learning architectures, which are compared based on accuracy, training speed, and inference quality.
 
 ## Architecture TF-IDF + TruncatedSVD
 ```mermaid
@@ -777,7 +780,7 @@ Let’s compare this with previous experiments:
 | BiLSTM + Attention  | Word Embeddings       | 256×2  | 79.72%         | ~90 min       |
 ```
 
-**Conclusion:** `BiLSTM + Attention` took second place (**79.72%**). The attention mechanism successfully learned to ignore `<PAD>` tokens and focus on key terms. However, the model proved to be more than 100 times slower to train and demonstrated a vulnerability to statistical biases in the data (for example, confidently classifying a text about `football` as `hockey` because the phrase "сборная России" was strongly correlated with hockey in the dataset).
+**Conclusion:** `BiLSTM + Attention` took second place (**79.72%**). The attention mechanism successfully learned to ignore `<PAD>` tokens and focus on key terms. However, the model proved to be more than 100 times slower to train and demonstrated a vulnerability to statistical biases in the data (for example, confidently classifying a text about `Football` as `hockey` (**75.43%**) because the phrase "сборная России" was strongly correlated with hockey in the dataset).
 
 ## Tech
 - 'Python 3.10+'
