@@ -73,7 +73,7 @@ def main():
     logger.info(f" Optimizer: Adam")
     logger.info(f" Learning Rate: {ba_config.DL_LEARNING_RATE}")
     logger.info(f" Batch Size: {ba_config.DL_BATCH_SIZE}")
-    logger.info(f" Max Epochs: {ba_config.DL_EPOCHS}")
+    logger.info(f" Max Epochs: {ba_config.DL_EPOCHS_CNN}")
     logger.info(f" Patience (Early Stopping): 3")
     logger.info(f"  Filter Sizes: {ba_config.DL_FILTER_SIZES}")
     logger.info(f"  Num Filters: {ba_config.DL_NUM_FILTERS}")
@@ -86,7 +86,7 @@ def main():
         val_loader=val_loader,
         optimizer=optimizer,
         loss_fn=loss_fn,
-        num_epochs=ba_config.DL_EPOCHS,
+        num_epochs=ba_config.DL_EPOCHS_CNN,
         patience=3,
         device=device
     )

@@ -689,7 +689,7 @@ Checking the first batch:
  - Early stopping triggered at epoch 10.
  - The best weights were from the epoch 7 with Val Loss: 0.9031
 ```
-![Статистика словаря](plots/fcn_training_history.png)
+![Статистика обучения](plots/fcn_training_history.png)
 
 **Final accuracy (FCN)**: 77.62%
 
@@ -721,7 +721,7 @@ Let’s compare this with previous experiments:
 **Conclusion:** A simple FCN architecture with learnable embeddings proved to be a robust solution (`77.62% accuracy`), outperforming heavy pre-trained embeddings (`E5 + LR: 75.72%`) due to better adaptation to the specific sports slang present in the dataset. This proves that for highly specialized domains (like sport), training your own embeddings from scratch often works better than using general-purpose models.
 
 ### Analysis of results after training RNN on text data
-1. **Early stopping worked perfectly:**
+**Early stopping worked perfectly:**
 - The model continued to improve up to **the 17th epoch** (Val Acc: `79.72%`, Val Loss: `0.7624`).
 - There were **no improvements** during epochs 18, 19, and 20.
 - At the 20th epoch, the `patience=3` condition was met, training stopped, and the script automatically reverted the model weights to those from the best epoch - the 17th. **This saved the model from overfitting.**
@@ -749,7 +749,7 @@ Let’s compare this with previous experiments:
  - Early Stopping triggered at epoch 20.
  - The best weights were from the epoch 17 with Val Loss: 0.7624
 ```
-![Статистика словаря](plots/bilstm_training_history.png)
+![Статистика обучения](plots/bilstm_training_history.png)
 
 **Final accuracy (RNN)**: 79.72%
 
@@ -781,6 +781,62 @@ Let’s compare this with previous experiments:
 ```
 
 **Conclusion:** `BiLSTM + Attention` took second place (**79.72%**). The attention mechanism successfully learned to ignore `<PAD>` tokens and focus on key terms. However, the model proved to be more than 100 times slower to train and demonstrated a vulnerability to statistical biases in the data (for example, confidently classifying a text about `Football` as `hockey` (**75.43%**) because the phrase "сборная России" was strongly correlated with hockey in the dataset).
+
+### Analysis of results after training CNN on text data
+
+**Key takeaways from CNN training:**
+1. **Early stopping worked perfectly:** the model showed consistent improvement up to the 34th epoch, after which it began to fluctuate. The script automatically halted training at the 37th epoch and restored the weights from the 34th epoch (Val Acc: **78.83%**, Val Loss: **0.7156**). This is a classic example of how overfitting is prevented.
+2. **CNNs represent the "sweet spot" in deep learning:**
+- They nearly matched the performance of a complex `BiLSTM+Attention model` (**78.95% vs. 79.72%**).
+- Yet, they train **3.5 times faster** (26 minutes vs. 90 minutes).
+- And they contain **one-third the number of parameters** (1.16M vs. 3.32M).
+3. **Why are CNNs superior to FCNs?** Their convolutional filters (kernel sizes of 3, 4, and 5) successfully learned to identify stable phrases - or n-grams - such as "сборная России", "Большой шлем", or "рекордную скорость" while effectively ignoring the order of the remaining words.
+```bash
+2026-11-15 21:20:57,010 - INFO - Запуск обучения
+ - Начало обучения на устройстве: CPU
+ - Epoch 1: New record! Val Loss: 2.2611, Val Acc: 0.3781
+ - Epoch 2: New record! Val Loss: 1.9595, Val Acc: 0.4259
+ - Epoch 3: New record! Val Loss: 1.7164, Val Acc: 0.5287
+ - Epoch 4: New record! Val Loss: 1.5374, Val Acc: 0.5718
+ - Epoch 5: New record! Val Loss: 1.3994, Val Acc: 0.6174
+ - Epoch 6: New record! Val Loss: 1.2876, Val Acc: 0.6494
+ - Epoch 7: New record! Val Loss: 1.1975, Val Acc: 0.6723
+ - Epoch 8: New record! Val Loss: 1.1228, Val Acc: 0.6878
+ - Epoch 9: New record! Val Loss: 1.0629, Val Acc: 0.7042
+ - Epoch 10: New record! Val Loss: 1.0146, Val Acc: 0.7095
+ - Epoch 11: New record! Val Loss: 0.9738, Val Acc: 0.7248
+ - Epoch 12: New record! Val Loss: 0.9423, Val Acc: 0.7287
+ - Epoch 13: New record! Val Loss: 0.9118, Val Acc: 0.7378
+ - Epoch 14: New record! Val Loss: 0.8854, Val Acc: 0.7402
+ - Epoch 15: New record! Val Loss: 0.8726, Val Acc: 0.7467
+ - Epoch 16: New record! Val Loss: 0.8456, Val Acc: 0.7521
+ - Epoch 17: New record! Val Loss: 0.8312, Val Acc: 0.7510
+ - Epoch 18: New record! Val Loss: 0.8239, Val Acc: 0.7497
+ - Epoch 19: New record! Val Loss: 0.8071, Val Acc: 0.7598
+ - Epoch 20: New record! Val Loss: 0.7924, Val Acc: 0.7655
+ - Epoch 21: New record! Val Loss: 0.7736, Val Acc: 0.7685
+ - Epoch 22: New record! Val Loss: 0.7710, Val Acc: 0.7683
+ - Epoch 23: New record! Val Loss: 0.7579, Val Acc: 0.7729
+ - Epoch 24: New record! Val Loss: 0.7519, Val Acc: 0.7736
+ - Epoch 25: New record! Val Loss: 0.7466, Val Acc: 0.7776
+ - Epoch 26: New record! Val Loss: 0.7444, Val Acc: 0.7760
+ - Epoch 27: New record! Val Loss: 0.7373, Val Acc: 0.7809
+ - Epoch 28: New record! Val Loss: 0.7306, Val Acc: 0.7806
+ - Epoch 29: New record! Val Loss: 0.7272, Val Acc: 0.7849
+ - Epoch 30: No improvement (1/3)
+ - Epoch 31: New record! Val Loss: 0.7205, Val Acc: 0.7844
+ - Epoch 32: No improvement (1/3)
+ - Epoch 33: New record! Val Loss: 0.7194, Val Acc: 0.7837
+ - Epoch 34: New record! Val Loss: 0.7156, Val Acc: 0.7883
+ - Epoch 35: No improvement (1/3)
+ - Epoch 36: No improvement (2/3)
+ - Epoch 37: No improvement (3/3)
+ - Early Stopping triggered at epoch 37.
+ - The best weights were from the epoch 34 with Val Loss: 0.7156
+```
+![Статистика обучения](plots/cnn_training_history.png)
+
+**Final accuracy (CNN)**: 78.95%
 
 ## Tech
 - 'Python 3.10+'
