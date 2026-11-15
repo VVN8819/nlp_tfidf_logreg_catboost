@@ -27,7 +27,7 @@
 - [x] Inference Deep Learning (RNN) (`ej_run_inference_rnn.py`)
 - [x] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
 - [x] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
-- [ ] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
+- [x] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -77,6 +77,9 @@ python e_scripts/eg_train_fcn.py
 # Training RNN
 python e_scripts/ei_train_bilstm_rnn.py
 
+# Training CNN
+python e_scripts/ek_train_cnn.py
+
 # Testing inference (prediction on new data)
 # Testing the TF-IDF pipeline
 python e_scripts/ec_run_inference.py
@@ -89,6 +92,9 @@ python e_scripts/eh_run_inference_dl.py
 
 # Testing Deep Learning (RNN) model inference
 python e_scripts/ej_run_inference_rnn.py
+
+# Testing Deep Learning (CNN) model inference
+python e_scripts/el_run_inference_cnn.py
 ```
 
 ## Project Architecture
@@ -201,7 +207,7 @@ graph TD
     InferenceEmb -.->|"12. Category + Confidence"| RunInferenceEmb
 ```
 
-## Architecture Deep Learning (FCN & BiLSTM + Attention)
+## Architecture Deep Learning (FCN, BiLSTM + Attention, CNN-1D)
 ```mermaid
 graph TD
     %% Стили
@@ -216,16 +222,18 @@ graph TD
 
     Preprocessing[" b_scr/bc_preprocessing.py<br/>Cleaning + lemmatization<br/>(spaCy + NLTK)"]:::module
     DataLoader[" b_scr/bi_data_loader_dl.py<br/>Vocabulary, Padding, Truncation<br/>(Text → Tensors)"]:::module
-    Models[" b_scr/bj_models_dl.py<br/>TextFCN: Embedding → Masked Pooling → FC<br/>TextBiLSTM: Embedding → BiLSTM → Attention → FC"]:::module
+    Models[" b_scr/bj_models_dl.py<br/>TextFCN: Embedding → Masked Pooling → FC<br/>TextBiLSTM: Embedding → BiLSTM → Attention → FC<br/>TextCNN: Embedding → Multi-scale Conv1d → MaxPool → FC"]:::module
     TrainingUtils[" b_scr/bk_training_utils.py<br/>Universal training loop + Early Stopping"]:::module
 
     %% ===== СКРИПТЫ ОБУЧЕНИЯ =====
     TrainFCN[" e_scripts/eg_train_fcn.py"]:::script
     TrainRNN[" e_scripts/ei_train_bilstm_rnn.py"]:::script
+    TrainCNN[" e_scripts/ek_train_cnn.py"]:::script
 
     %% ===== СКРИПТЫ ИНФЕРЕНСА =====
     RunInferenceFCN[" e_scripts/eh_run_inference_dl.py"]:::script
     RunInferenceRNN[" e_scripts/ej_run_inference_rnn.py"]:::script
+    RunInferenceCNN[" e_scripts/el_run_inference_cnn.py"]:::script
 
     %% ===== АРТЕФАКТЫ: FCN =====
     FCNModels[(" d_models/<br/>fcn_model.pt<br/>fcn_vocabulary.pt")]:::model
@@ -234,6 +242,10 @@ graph TD
     %% ===== АРТЕФАКТЫ: BiLSTM =====
     BiLSTMModels[(" d_models/<br/>bilstm_model.pt<br/>bilstm_vocabulary.pt")]:::model
     BiLSTMPlots[(" plots/<br/>bilstm_training_history.png")]:::model
+
+    %% ===== АРТЕФАКТЫ: CNN =====
+    CNNModels[(" d_models/<br/>cnn_model.pt<br/>cnn_vocabulary.pt")]:::model
+    CNNPlots[(" plots/<br/>cnn_training_history.png")]:::model
 
     %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ FCN =====
     ProcessedData -->|"1. Reading cleaned texts"| TrainFCN
@@ -252,6 +264,15 @@ graph TD
     Models -->|"5. Forward/Backward pass"| TrainingUtils
     TrainingUtils -->|"6. Saving best weights & vocab"| BiLSTMModels
     TrainingUtils -->|"7. Saving training plots"| BiLSTMPlots
+
+    %% ===== ПОТОК ДАННЫХ: ОБУЧЕНИЕ CNN =====
+    ProcessedData -->|"1. Reading cleaned texts"| TrainCNN
+    TrainCNN -->|"2. Building Vocabulary &<br/>Padding/Truncation"| DataLoader
+    DataLoader -->|"3. Creating PyTorch DataLoaders"| TrainCNN
+    TrainCNN -->|"4. Initializing TextCNN<br/>(filter_sizes=[3,4,5])"| Models
+    Models -->|"5. Forward/Backward pass"| TrainingUtils
+    TrainingUtils -->|"6. Saving best weights & vocab"| CNNModels
+    TrainingUtils -->|"7. Saving training plots"| CNNPlots
 
     %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС FCN =====
     RunInferenceFCN -.->|"Receives new raw text"| Preprocessing
@@ -274,6 +295,17 @@ graph TD
     RunInferenceRNN -.->|"13. Load bilstm_model.pt"| BiLSTMModels
     BiLSTMModels -.->|"14. model.forward() + Softmax"| RunInferenceRNN
     RunInferenceRNN -.->|"15. Category + Confidence"| RunInferenceRNN
+
+    %% ===== ПОТОК ДАННЫХ: ИНФЕРЕНС CNN =====
+    RunInferenceCNN -.->|"Receives new raw text"| Preprocessing
+    Preprocessing -.->|"8. Cleaned text"| RunInferenceCNN
+    RunInferenceCNN -.->|"9. Load cnn_vocabulary.pt"| CNNModels
+    CNNModels -.->|"10. Word2Idx mapping"| RunInferenceCNN
+    RunInferenceCNN -.->|"11. Tokenize, Pad, Truncate<br/>(to MAX_SEQ_LENGTH)"| DataLoader
+    DataLoader -.->|"12. PyTorch Tensor [1, 128]"| RunInferenceCNN
+    RunInferenceCNN -.->|"13. Load cnn_model.pt"| CNNModels
+    CNNModels -.->|"14. model.forward() + Softmax"| RunInferenceCNN
+    RunInferenceCNN -.->|"15. Category + Confidence"| RunInferenceCNN
 ```
 
 ## Project structure
@@ -316,7 +348,9 @@ nlp_tfidf_logreg_catboost/
 │   ├── fcn_model.pt                    # Deep Learning (FCN) model weights
 │   ├── dl_vocabulary.pt                # Deep Learning (FCN) mode dictionary and class mapping
 │   ├── bilstm_model.pt                 # Deep Learning (RNN) model weights
-│   └── bilstm_vocabulary.pt            # Deep Learning (RNN) mode dictionary and class mapping
+│   ├── bilstm_vocabulary.pt            # Deep Learning (RNN) mode dictionary and class mapping
+│   ├── cnn_model.pt                    # Deep Learning (CNN) model weights
+│   └── cnn_vocabulary.pt               # Deep Learning (CNN) mode dictionary and class mapping
 │
 ├──  e_scripts/                       # Entry points
 │   ├── ea_train_logistic_regression.py # Training Logistic Regression
@@ -327,13 +361,17 @@ nlp_tfidf_logreg_catboost/
 │   ├── ef_run_inference_embeddings.py  # inference on embeddings + OOD check
 │   ├── eg_train_fcn.py                 # training FCN on text data
 │   ├── eh_run_inference_dl.py          # inference FCN
-│   └── ei_train_bilstm_rnn.py          # training RNN on text data
+│   ├── ei_train_bilstm_rnn.py          # training RNN on text data
+│   ├── ej_run_inference_rnn.py         # inference RNN
+│   ├── ek_train_cnn.py                 # training CNN on text data
+│   └── el_run_inference_cnn.py         # inference CNN
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── dl_text_lengths.png             # Text lengths for Deep Learning
 │   ├── dl_vocabulary.png               # Vocabulary Analysis for Deep Learning
 │   ├── fcn_training_history.png        # Cross-Entropy Loss and Classification Accuracy (FCN)
 │   ├── bilstm_training_history.png     # Cross-Entropy Loss and Classification Accuracy (RNN)
+│   ├── cnn_training_history.png        # Cross-Entropy Loss and Classification Accuracy (CNN)
 │   ├── image-1.png                     # Text lengths (before cleaning)
 │   ├── image-2.png                     # Top 20 words (before cleaning)
 │   ├── image-3.png                     # Top 15 words in the 'football' category
@@ -837,6 +875,41 @@ Let’s compare this with previous experiments:
 ![Статистика обучения](plots/cnn_training_history.png)
 
 **Final accuracy (CNN)**: 78.95%
+
+### Inference analysis of a Convolutional Neural Network (CNN-1D)
+**Convolutional filters** (with kernel sizes of 3 and 4) **excel at recognizing local patterns (n-grams)**, such as "футбольный матч" while **ignoring the global context** that misled the recurrent network.
+```bash
+| Test      | Prediction | Confidence | Comment                                                             |
+| Football  | football   | 75.08%     | CNN confidently returned "football"                                 | 
+| Café (OOD)| esport     | 20.7%      | Confidence dropped - the best result among all deep learning models |
+```
+
+### Selection of the model after СNN
+Let’s compare this with previous experiments:
+```bash
+| Model               | Vectorizer            | Size   | Accuracy (Val) | Training time | OOD Conf. |
+| Logistic Regression | TF-IDF (N-grams)      | 10 000 | 81.29%         | ~3 sec        | 16.2%     |
+| CatBoost            | TF-IDF + TruncatedSVD | 150    | 69.41%         | ~1.5 min      | -         |
+| Logistic Regression | E5 Embeddings         | 384    | 75.72%         | ~2 sec        | 14.7%     |
+| CatBoost            | E5 Embeddings         | 384    | 72.01%         | ~3.5 min      | 13.3%     |
+| FCN (PyTorch)       | Word Embeddings       | 100    | 77.62%         | ~30 sec       | 40.9%     |
+| BiLSTM + Attention  | Word Embeddings       | 256×2  | 79.72%         | ~90 min       | 57.2%     |
+| CNN-1D              | Word Embeddings       | 100    | 78.95%         | ~26 min       | 20.7%     |
+```
+
+### Key Findings and Model Selection for Production
+
+The study involved testing 7 different pipelines. The results lead to the following engineering conclusions:
+
+1. **The Triumph of Simplicity (Occam’s Razor):** The **Logistic Regression + TF-IDF** model achieved the highest accuracy (81.29%). For short texts containing distinct markers (such as team names or types of sports), a frequency-based approach preserves more useful discrete signals than dense embeddings. Furthermore, it trains in seconds and is highly interpretable.
+2. **Deep Learning Efficiency:**
+- **CNN-1D** proved to be the "golden mean." It performed nearly as well as the more complex BiLSTM (78.95% vs. 79.72%) while training **3.5 times faster** and requiring **3 times fewer parameters**. Additionally, the CNN demonstrated superior OOD (out-of-distribution) detection—showing only 20.7% confidence when presented with irrelevant text—and successfully avoided the "football-related text" trap that ensnared the BiLSTM. 
+- **BiLSTM + Attention** demonstrated an excellent ability to capture context; however, it proved too computationally heavy and slow for this specific task, and it was also prone to overfitting on statistical artifacts within the dataset.
+3. **Why CatBoost underperformed:** Applying TruncatedSVD to sparse TF-IDF data resulted in an irreversible loss of semantic information (unique n-grams), which caused a significant drop in performance metrics.
+4. **Production safety:** All deep learning models demonstrated well-calibrated confidence scores. Low confidence (< 30%) on out-of-distribution (OOD) data allows for the easy implementation of a threshold filter (e.g., `if confidence < 0.50: reject`) to protect the system from junk input.
+
+**Final solution:**
+For deployment, the **TF-IDF + Logistic Regression** pipeline was selected as the most reliable, fast, and accurate approach (baseline). The **CNN-1D** architecture has been retained in the repository as a benchmark example of an effective deep learning approach, ready for scaling should the volume or complexity of the data increase.
 
 ## Tech
 - 'Python 3.10+'

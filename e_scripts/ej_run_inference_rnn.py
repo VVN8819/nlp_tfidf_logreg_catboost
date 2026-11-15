@@ -41,7 +41,7 @@ def load_model_and_vocab(model_path, vocab_path, device='cpu'):
         hidden_dim=ba_config.DL_HIDDEN_DIM,
         num_layers=ba_config.DL_NUM_LAYERS,
         num_classes=num_classes,
-        dropout_rate=ba_config.DL_DROPOUT # При инференсе Dropout отключен
+        dropout_rate=0.0 # При инференсе Dropout отключен
     ).to(device)
     
     # Загружаем обученные веса
