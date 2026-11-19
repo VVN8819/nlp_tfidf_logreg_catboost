@@ -10,6 +10,7 @@ d_models/*.cbm
 d_models/*.pth
 d_models/*.joblib
 d_models/*.pt
+d_models/*.model
 
 # Python
 __pycache__/

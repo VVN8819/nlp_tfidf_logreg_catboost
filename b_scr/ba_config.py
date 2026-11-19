@@ -57,3 +57,15 @@ DL_FILTER_SIZES = [3, 4, 5]
 DL_NUM_FILTERS = 128
 
 PLOTS_PATH = os.path.join(BASE_DIR, "plots")
+
+# WORD2VEC гипперпараметры
+W2V_VECTOR_SIZE = 128 # Размерность эмбеддингов
+W2V_WINDOW = 5 # Размер контекстного окна
+W2V_MIN_COUNT = 5 # Игнорировать слова, встречающиеся реже 5 раз
+W2V_SG = 1 # 1 = Skip-Gram (лучше для малых данных), 0 = CBOW
+W2V_EPOCHS_INITIAL = 10 # Начальное количество эпох при инициализации
+W2V_EPOCHS_ADDITIONAL = 30 # Дополнительные эпохи при дообучении
+W2V_WORKERS = 1 # Количество потоков
+W2V_SEED = 42 # Фиксация генератора случайных чисел
+
+

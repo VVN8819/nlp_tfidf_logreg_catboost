@@ -28,6 +28,10 @@
 - [x] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
 - [x] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
 - [x] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
+- [ ] Word2Vec training (`em_train_word2vec.py`)
+- [ ] Word2Vec visualization with PCA
+- [ ] Word2Vec visualization with t-SNE
+- [ ] Word2Vec visualization with UMAP
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -910,6 +914,8 @@ The study involved testing 7 different pipelines. The results lead to the follow
 
 **Final solution:**
 For deployment, the **TF-IDF + Logistic Regression** pipeline was selected as the most reliable, fast, and accurate approach (baseline). The **CNN-1D** architecture has been retained in the repository as a benchmark example of an effective deep learning approach, ready for scaling should the volume or complexity of the data increase.
+
+## Part 3. Word2Vec
 
 ## Tech
 - 'Python 3.10+'
