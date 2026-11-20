@@ -10,7 +10,6 @@ import logging
 import pandas as pd
 import nltk
 from gensim.models import Word2Vec
-from nltk.tokenize import word_tokenize
 
 # Добавляем корень проекта в пути
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,7 +30,7 @@ def main():
     
     # 2. Токенизация текстов
     logger.info("Токенизация текстов")
-    df["tokens"] = df["clean_text"].apply(lambda text: word_tokenize(text, language='russian'))
+    df["tokens"] = df["clean_text"].str.split()
     
     # Удаляем пустые токены
     df["tokens"] = df["tokens"].apply(lambda tokens: [t for t in tokens if t.strip()])

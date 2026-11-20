@@ -916,6 +916,28 @@ The study involved testing 7 different pipelines. The results lead to the follow
 For deployment, the **TF-IDF + Logistic Regression** pipeline was selected as the most reliable, fast, and accurate approach (baseline). The **CNN-1D** architecture has been retained in the repository as a benchmark example of an effective deep learning approach, ready for scaling should the volume or complexity of the data increase.
 
 ## Part 3. Word2Vec
+### Analysis of Word2Vec training results
+```bash
+- Model statistics:
+2026-11-20 02:40:38,222 - INFO -   Vocabulary size: 18719 words
+2026-11-20 02:40:38,222 - INFO -   Vector size: 128
+```
+1. **Excellent noise filtering:**
+Initially, the model identified 80,303 unique words. However, thanks to the `min_count=5` parameter, it discarded 61,584 infrequent words (typos, random names, noise) and retained **18,719 high-quality words**.
+```bash
+- Примеры семантической близости (топ-3):
+2026-11-20 02:40:38,237 - INFO -   футбол - megogo (0.62), торпедомиасс (0.61), сетанта (0.60)
+2026-11-20 02:40:38,237 - INFO -   хоккей - лигасильных (0.63), нашеподмосковье (0.60), хоккейный (0.58)
+2026-11-20 02:40:38,239 - INFO -   теннис - привнести (0.57), теннисный (0.54), ролан (0.53)
+2026-11-20 02:40:38,239 - INFO -   игрок  - футболист (0.52), капитан (0.52), форвард (0.51)
+2026-11-20 02:40:38,239 - INFO -   матч   - полуфинальный (0.60), сыграть (0.59), поединок (0.57)
+```
+2. **Semantic Proximity:**
+Let's look at the `most_similar` results. On its own — without any vocabularies or predefined rules — the model has grasped the meaning of these words:
+- `игрок` - футболист (**0.52**), капитан (0.52), форвард (0.51)
+- `матч` - полуфинальный (**0.60**), сыграть (0.59), поединок (0.57)
+- `теннис` - Roland (**0.53**) (The model has learned "Roland Garros")
+- `футбол` - торпедомиасс, сетанта (Sponsors and broadcasters frequently mentioned in the context of football on VK)
 
 ## Tech
 - 'Python 3.10+'
