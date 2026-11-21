@@ -1,6 +1,7 @@
 # Данные
 a_data/aa_raw/
 a_data/ab_processed/
+a_data/ac_eda_data/
 *.csv
 *.xlsx
 

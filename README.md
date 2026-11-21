@@ -28,7 +28,8 @@
 - [x] Convolutional Neural Network (CNN) class with Dropout (`bj_models_dl.py`)
 - [x] Model training and comparison (CNN vs TF-IDF vs E5 Embeddings) (`ek_train_cnn.py`)
 - [x] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
-- [ ] Word2Vec training (`em_train_word2vec.py`)
+- [x] Word2Vec training (`em_train_word2vec.py`)
+- [x] Exploratory Data Analysis (EDA) for Word2Vec
 - [ ] Word2Vec visualization with PCA
 - [ ] Word2Vec visualization with t-SNE
 - [ ] Word2Vec visualization with UMAP
@@ -939,6 +940,34 @@ Let's look at the `most_similar` results. On its own — without any vocabularie
 - `теннис` - Roland (**0.53**) (The model has learned "Roland Garros")
 - `футбол` - торпедомиасс, сетанта (Sponsors and broadcasters frequently mentioned in the context of football on VK)
 
+### Exploratory Data Analysis (EDA) for Word2Vec
+The model successfully matched all 18,719 words with their **dominant categories**.
+```bash
+Word distribution by categories:
+- autosport       2102
+- boardgames      1992
+- athletics       1913
+- extreme         1883
+- motosport       1752
+- winter_sport    1647
+- martial_arts    1603
+- hockey          1335
+- tennis          1076
+- volleyball       990
+- basketball       927
+- football         886
+- esport           613
+```
+But let's compare the **distribution of Texts and Unique words in Word2Vec** by categoties.
+1. **Why TF-IDF won**: In 6 out of 13 categories (`boardgames`, `athletics`, `extreme`, `autosport`, `winter_sport`, `motosport`), the vocabulary is so specific that a frequency-based approach works perfect.
+2. **Why deep learning models haven't yielded significant gains**: In categories with "vague" terminology (`football`, `tennis`, `basketball`), even complex models fail to identify clear patterns - simply because, objectively, there are very few such patterns to be found.
+3. **Why `esports` is the most challenging category**: A `uniqueness coefficient` of **0.28** indicates that, in terms of vocabulary, texts about esports are nearly indistinguishable from texts about other types of games. **This is a fundamental issue with the data, not the models.**
+
+![Distribution: Texts vs Unique words Word2Vec](plots/w2v_vs_tfidf_distribution.png)
+
+The color-coding in the second chart instantly reveals the "density" of the vocabulary: **the green bars** (`boardgames`, `athletics`) represent categories where TF-IDF performs perfect, while the **red** ones (`esports`, `football`) are areas where even complex models struggle.
+
+
 ## Tech
 - 'Python 3.10+'
 - 'scikit-learn', 'CatBoost'
@@ -946,4 +975,5 @@ Let's look at the `most_similar` results. On its own — without any vocabularie
 - 'pandas', 'numpy'
 - 'sentence_transformers'
 - 'torch', 'torchtext'
+- 'umap-learn'
 

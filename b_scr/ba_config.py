@@ -14,6 +14,11 @@ DATA_DIR = os.path.join(BASE_DIR, "a_data")
 RAW_DATA_PATH = os.path.join(DATA_DIR, "aa_raw", "train.csv")
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "ab_processed", "preprocessed_train.csv")
 
+# EDA артефакты (данные для визуализации)
+EDA_DATA_PATH = os.path.join(DATA_DIR, "ac_eda_data")
+TEXT_CATEGORY_COUNTS_PATH = os.path.join(EDA_DATA_PATH, "text_category_counts.csv")
+WORD_CATEGORY_COUNTS_PATH = os.path.join(EDA_DATA_PATH, "word_category_counts.csv")
+
 # ПУТИ К МОДЕЛЯМ И АРТЕФАКТАМ
 MODELS_PATH = os.path.join(BASE_DIR, "d_models")
 
