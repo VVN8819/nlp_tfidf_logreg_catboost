@@ -30,8 +30,8 @@
 - [x] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
 - [x] Word2Vec training (`em_train_word2vec.py`)
 - [x] Exploratory Data Analysis (EDA) for Word2Vec
-- [ ] Word2Vec visualization with PCA
-- [ ] Word2Vec visualization with t-SNE
+- [х] Word2Vec visualization with PCA
+- [х] Word2Vec visualization with t-SNE
 - [ ] Word2Vec visualization with UMAP
 - [ ] Final documentation
 
@@ -966,6 +966,22 @@ But let's compare the **distribution of Texts and Unique words in Word2Vec** by 
 ![Distribution: Texts vs Unique words Word2Vec](plots/w2v_vs_tfidf_distribution.png)
 
 The color-coding in the second chart instantly reveals the "density" of the vocabulary: **the green bars** (`boardgames`, `athletics`) represent categories where TF-IDF performs perfect, while the **red** ones (`esports`, `football`) are areas where even complex models struggle.
+
+### Word2Vec visualization with PCA
+
+![Word2Vec Embeddings: PCA Visualization](plots/w2v_pca_2d.png)
+The plot shows **a single large cloud with no distinct clusters**. This is perfectly normal for PCA.
+**Here’s what can actually be seen in the PCA:**
+- **Top right** - yellow dots (`volleyball`)
+- **Bottom right** - light green dots (`tennis`)
+- **Left** - orange dots (`extreme`)
+- **In the center** - a jumble of everything else
+
+*A global structure exists, but it is not clearly defined.*
+
+### Word2Vec visualization with t-SNE
+
+![Word2Vec Embeddings: t-SNE Visualization](plots/w2v_tsne_2d.png)
 
 
 ## Tech
