@@ -30,9 +30,12 @@
 - [x] Inference Deep Learning (CNN) (`el_run_inference_cnn.py`)
 - [x] Word2Vec training (`em_train_word2vec.py`)
 - [x] Exploratory Data Analysis (EDA) for Word2Vec
-- [х] Word2Vec visualization with PCA
-- [х] Word2Vec visualization with t-SNE
-- [ ] Word2Vec visualization with UMAP
+- [x] Word2Vec visualization with PCA
+- [x] Word2Vec visualization with t-SNE
+- [x] Word2Vec visualization with UMAP
+- [ ] Extracting embeddings for Word2Vec (`en_extract_w2v_embeddings.py`)
+- [ ] Training RNN model on 128-dimensional features (`eo_train_w2v_lr.py`)
+- [ ] Inference Word2Vec (`ep_run_inference_w2v.py`)
 - [ ] Final documentation
 
 # Sports Text Classifier 
@@ -44,6 +47,7 @@ Implemented models:
 - TF-IDF (Logistic Regression, CatBoost, CatBoost + TruncatedSVD)
 - Pretrained Embeddings (Logistic Regression, CatBoost)
 - Deep Learning (FCN, RNN, CNN)
+- Word2Vec (RNN)
 
 ## Fast start
 
@@ -85,6 +89,9 @@ python e_scripts/ei_train_bilstm_rnn.py
 # Training CNN
 python e_scripts/ek_train_cnn.py
 
+# Training Word2Vec
+python e_scripts/em_train_word2vec.py
+
 # Testing inference (prediction on new data)
 # Testing the TF-IDF pipeline
 python e_scripts/ec_run_inference.py
@@ -103,7 +110,7 @@ python e_scripts/el_run_inference_cnn.py
 ```
 
 ## Project Architecture
-During the study, 7 different pipelines were tested, ranging from classical machine learning to modern deep learning architectures, which are compared based on accuracy, training speed, and inference quality.
+During the study, 8 different pipelines were tested, ranging from classical machine learning to modern deep learning architectures, which are compared based on accuracy, training speed, and inference quality.
 
 ## Architecture TF-IDF + TruncatedSVD
 ```mermaid
@@ -320,9 +327,12 @@ nlp_tfidf_logreg_catboost/
 ├── a_data/                          # Project data
 │   ├── aa_raw/                      # Raw, original data
 │   │   └── train.csv                   # Original dataset from Kaggle (38,740 rows)
-│   └── ab_processed/                # Processed data
-│       ├── preprocessed_train.csv      # Cleaned text after preprocessing
-│       └── embedded_train.csv          # text + 384 columns of embeddings
+│   ├── ab_processed/                # Processed data
+│   │   ├── preprocessed_train.csv      # Cleaned text after preprocessing
+│   │   └── embedded_train.csv          # text + 384 columns of embeddings
+│   └── ac_eda_data/                 # Distribution analysis
+│       ├── text_category_counts.csv    # Text distribution by categories
+│       └── word_category_counts.csv    # Word distribution by categories
 │
 ├── b_scr/                           # Source code
 │   ├── ba_config.py                    # Configuration: paths, constants, parameters
@@ -342,7 +352,8 @@ nlp_tfidf_logreg_catboost/
 │   │   └── data_loader_20261013.log
 │   ├── ca_check_data.ipynb             # Data loader verification
 │   ├── cb_eda.ipynb                    # Exploratory Data Analysis (EDA)
-│   └── cc_deep_learning_exploration.ipynb # Exploratory Data Analysis (EDA) for Deep Learning
+│   ├── cc_deep_learning_exploration.ipynb # Exploratory Data Analysis (EDA) for Deep Learning
+│   └── cd_word2vec_exploration.ipynb   # Exploratory Data Analysis (EDA) for Word2Vec
 │
 ├── d_models/                        # Trained models and artifacts
 │   ├── logistic_regression.joblib      # Best-performing model from the TF-IDF (Accuracy: 81.29%)
@@ -355,7 +366,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── bilstm_model.pt                 # Deep Learning (RNN) model weights
 │   ├── bilstm_vocabulary.pt            # Deep Learning (RNN) mode dictionary and class mapping
 │   ├── cnn_model.pt                    # Deep Learning (CNN) model weights
-│   └── cnn_vocabulary.pt               # Deep Learning (CNN) mode dictionary and class mapping
+│   ├── cnn_vocabulary.pt               # Deep Learning (CNN) mode dictionary and class mapping
+│   └── word2vec_sports.model           # Word2Vec model trained
 │
 ├──  e_scripts/                       # Entry points
 │   ├── ea_train_logistic_regression.py # Training Logistic Regression
@@ -369,7 +381,8 @@ nlp_tfidf_logreg_catboost/
 │   ├── ei_train_bilstm_rnn.py          # training RNN on text data
 │   ├── ej_run_inference_rnn.py         # inference RNN
 │   ├── ek_train_cnn.py                 # training CNN on text data
-│   └── el_run_inference_cnn.py         # inference CNN
+│   ├── el_run_inference_cnn.py         # inference CNN
+│   └── em_train_word2vec.py            # training Word2Vec
 │
 ├── plots/                           #  Visualizations from EDA
 │   ├── dl_text_lengths.png             # Text lengths for Deep Learning
@@ -383,6 +396,13 @@ nlp_tfidf_logreg_catboost/
 │   ├── image-4.png                     # Top 20 words (after cleaning)
 │   ├── image-5.png                     # Text lengths (after cleaning)
 │   └── image.png                       # Category distribution
+│   ├── w2v_pca_2d.html                 # Word2Vec Embeddings: PCA Visualization
+│   ├── w2v_pca_2d.png                  # Word2Vec Embeddings: PCA Visualization
+│   ├── w2v_tsne_2d.html                # Word2Vec Embeddings: t-SNE Visualization
+│   ├── w2v_tsne_2d.png                 # Word2Vec Embeddings: t-SNE Visualization
+│   ├── w2v_umap_2d.html                # Word2Vec Embeddings: UMAP Visualization
+│   ├── w2v_umap_2d.png                 # Word2Vec Embeddings: UMAP Visualization
+│   └── w2v_vs_tfidf_distribution.png   # Distribution and Lexical uniqueness coefficient
 │
 ├── .gitignore                          # Git exclusions (data, cache, logs)
 ├── LICENSE
@@ -982,6 +1002,38 @@ The plot shows **a single large cloud with no distinct clusters**. This is perfe
 ### Word2Vec visualization with t-SNE
 
 ![Word2Vec Embeddings: t-SNE Visualization](plots/w2v_tsne_2d.png)
+The graph shows **distinct, isolated clusters** in the corners and along the periphery:
+- **Left edge** (x ≈ -45) dark yellow - Unique vocabulary, far removed from the rest (`basketball`)
+- **Top** (y ≈ 25) light red - Dense cluster, well-isolated (`athletics`)
+- **Bottom** (y ≈ -25) violet - A separate small island (`tennis`)
+
+**Key observation:**
+- The center of the plot is a "jumble" of generic terms (`игра`, `матч`, `команда`, `победа`, `турнир`). **These appear across all categories, which is why t-SNE cannot separate them.**
+- The periphery consists of unique terms that belong to only one category. **These are what form the dense clusters.**
+
+*This serves as direct **visual confirmation of the hypothesis** we derived from our analysis of **the uniqueness coefficient**.*
+
+**But t-SNE has a critical flaw:** the distances between clusters are meaningless. The fact that `basketball` is far from `tennis` **does not mean that they are very different**. This is an artifact of the algorithm.
+
+### Word2Vec visualization with UMAP
+
+![Word2Vec Embeddings: UMAP Visualization](plots/w2v_umap_2d.png)
+**Key observation:** *Semantic proximity of categories*
+**UMAP** revealed something that **t-SNE** could not - **the distances between clusters are meaningful**:
+- `motosport` - `autosport` (at the top) - both relate to racing, tracks, and speed
+- `athletics` - `volleyball` (bottom left) - track and field / team sports
+- `hockey` - `martial_arts` (on the right) - high-intensity, contact sports
+- `tennis` - `basketball` (on the right) - popular individual / team sports
+
+**Graphic center:** *General terms*
+At the center is a jumble of terms from the categories `extreme`, `football`, `winter_sport`, and `esport`. These are words that appear across many categories: `игра`, `матч`, `команда`, `победа`, `турнир`.
+
+UMAP revealed that `Word2Vec` has learned **high-quality embeddings**:
+- Unique category-specific terms are grouped into dense clusters
+- Related categories (e.g., `motorsport`/`autosport`) are positioned close to one another
+- General terms (e.g., `игра`, `матч`) are located in the center, between the categories
+
+This means that if we feed these embeddings into a **Logistic Regression** model, the model will be able to easily separate the categories based on their distinct clusters.
 
 
 ## Tech
