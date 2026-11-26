@@ -106,5 +106,27 @@ def train_catboost_svd(X_train, y_train, X_val, y_val):
     
     return model, acc
     
+def train_logistic_regression_w2v(X_train, y_train, X_val, y_val):
+    """
+    Обучает Logistic Regression на Word2Vec признаках.
+    """
+    logger.info(" Обучение Logistic Regression на Word2Vec")
     
+    model = LogisticRegression(
+        max_iter=1000,
+        random_state=ba_config.RANDOM_SEED,
+        C=1.0, # Регуляризация
+        multi_class='multinomial',
+        n_jobs=-1  # Использовать все ядра CPU
+    )
+    model.fit(X_train, y_train)
+    logger.info("- Модель обучена")
+    
+    model_path = os.path.join(ba_config.MODELS_PATH, "w2v_logistic_regression.joblib")
+    acc = evaluate_and_save_model(model, "Logistic Regression (W2V)", X_val, y_val, model_path)
+    
+    return model, acc
+
+
+
     

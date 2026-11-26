@@ -34,7 +34,7 @@
 - [x] Word2Vec visualization with t-SNE
 - [x] Word2Vec visualization with UMAP
 - [x] Extracting Word2Vec embeddings (`en_extract_w2v_embeddings.py`)
-- [ ] Training LR model on 128-dimensional features (`eo_train_w2v_lr.py`)
+- [x] Training LR model on 128-dimensional features of Word2Vec (`eo_train_w2v_lr.py`)
 - [ ] Inference Word2Vec (`ep_run_inference_w2v.py`)
 - [ ] Final documentation
 
