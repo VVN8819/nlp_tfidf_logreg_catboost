@@ -1035,6 +1035,40 @@ UMAP revealed that `Word2Vec` has learned **high-quality embeddings**:
 
 This means that if we feed these embeddings into a **Logistic Regression** model, the model will be able to easily separate the categories based on their distinct clusters.
 
+### Word2Vec Embeddings + Logistic Regression
+```bash
+2026-11-27 02:57:07,413 - INFO - Classification Report:
+              precision    recall  f1-score   support
+
+   athletics       0.86      0.86      0.86       415
+   autosport       0.83      0.83      0.83       482
+  basketball       0.89      0.79      0.83       392
+  boardgames       0.85      0.89      0.87       404
+      esport       0.65      0.75      0.70       434
+     extreme       0.53      0.62      0.57       441
+    football       0.80      0.74      0.77       446
+      hockey       0.84      0.82      0.83       464
+martial_arts       0.77      0.69      0.73       462
+   motosport       0.80      0.79      0.79       435
+      tennis       0.96      0.94      0.95       469
+  volleyball       0.81      0.75      0.78       443
+winter_sport       0.78      0.82      0.80       437
+
+    accuracy                           0.79      5724
+   macro avg       0.80      0.79      0.79      5724
+weighted avg       0.80      0.79      0.79      5724
+```
+
+**Final accuracy (Word2Vec Embeddings + LR)**: 79.16% - 3rd place among 9 tested pipelines, trained in just 5 seconds.
+
+**Three powerful takeaways** from this result:
+1. **Domain-specific embeddings > General-purpose embeddings**
+`Word2Vec` (79.16%) **outperformed** `E5` (75.72%) by **3.44%**, even though E5 is trained on millions of texts across 100+ languages. Why? Because **Word2Vec was trained exclusively on sports-related posts from VK**, allowing it to grasp specific slang that gets "diluted" in E5.
+2. **Simple LR with frozen embeddings > Complex neural networks**
+`Word2Vec + LR` (79.16%) **outperformed** `FCN` (77.62%) and `CNN` (78.95%), which trained embeddings from scratch.
+3. **Training speed - much faster than BiLSTM**
+`Word2Vec + LR` took **5 seconds** to train, compared to **90 minutes** for `BiLSTM`, while sacrificing only 0.56% in accuracy. This is an ideal trade-off for a production environment.
+
 
 ## Tech
 - 'Python 3.10+'
